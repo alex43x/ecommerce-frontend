@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useContext, createContext } from "react";
+import React, { useState, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
-
-export const AuthContext = createContext();
-
+import { AuthContext } from "./AuthContext";
+import { useNavigate } from "react-router-dom";
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [autenticated, setAutenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const navigate=useNavigate();
 
   const validateToken = () => {
     const token = localStorage.getItem("AuthToken");
@@ -18,6 +18,7 @@ export const AuthProvider = ({ children }) => {
     }
     try {
       const decoded = jwtDecode(token);
+      setUser(decoded);
       const tokenExpiration = decoded.exp * 1000;
       const now = Date.now();
       if (tokenExpiration < now) {
@@ -33,14 +34,23 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
         setAutenticated(false);
         console.error(error);
+    }finally{
+      setLoading(false);
     }
   };
-  setLoading(false);
+
 
   const login=(userData,token)=>{
     localStorage.setItem("AuthToken",token);
-    setUser(userData);
+    const decoded=jwtDecode(token);
+    setUser(decoded);
     setAutenticated(true);
+    if(decoded.role==="admin"){
+      navigate("/dashboard");
+    }else{
+      navigate("/pos");
+    }
+    
   }
   
   const logout=()=>{
@@ -60,5 +70,3 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-
-export const useAuth=()=>useContext(AuthContext);

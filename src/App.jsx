@@ -1,24 +1,39 @@
-import {
-  BrowserRouter as Router,
-  Route,
-  Routes,
-  Navigate,
-} from "react-router-dom";
-import { AuthProvider } from "./routes/contexts/authContext";
+import { Routes, Route, Navigate } from "react-router-dom";
+import ProtectedRoute from "./components/ProtectedRoute";
 
-import "./App.css";
-import Login from "./routes/login";
+import Login from "./pages/login/Login";
+import Dashboard from "./pages/dashboard/Dashboard";
+import POS from "./pages/pos/Pos";
+import Unauthorized from "./pages/Unauthorized";
+
+import { ProductProvider } from "./context/product/ProductProvider";
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          {/*Pagina de login*/}
-          <Route path="/login" element={<Login />}></Route>
-        </Routes>
-      </Router>
-    </AuthProvider>
+    <Routes>
+      <Route path="/" element={<Navigate to="/login" />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/unauthorized" element={<Unauthorized />} />
+
+      {/* Rutas para Admin */}
+      <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+        <Route
+          path="/dashboard"
+          element={
+            <ProductProvider>
+              <Dashboard />
+            </ProductProvider>
+          }
+        />
+
+        <Route path="/admin/config" element={<div>Config Admin</div>} />
+      </Route>
+
+      {/* Rutas para Admin y Users */}
+      <Route element={<ProtectedRoute allowedRoles={["admin", "user"]} />}>
+        <Route path="/pos" element={<POS />} />
+      </Route>
+    </Routes>
   );
 }
 
