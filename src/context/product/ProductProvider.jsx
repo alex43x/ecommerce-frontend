@@ -4,11 +4,22 @@ import { ProductContext } from "./ProductContext";
 export const ProductProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [product, setProduct] = useState(null);
+  const [categories, setCategories] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  const token=localStorage.getItem("AuthToken")
+  const [fetched, setFetched] = useState(false);
+  const token = localStorage.getItem("AuthToken");
 
-  const getProducts = async ({page=1, limit=10, category=null, search=null, sortBy=null}) => {
+  const getProducts = async ({
+    page = 1,
+    limit = 10,
+    category = null,
+    search = null,
+    sortBy = null,
+    forceRefresh = false,
+  }) => {
+    if (fetched && !forceRefresh) return;
+    setLoading(true);
     const queryParams = {
       page,
       limit,
@@ -16,84 +27,149 @@ export const ProductProvider = ({ children }) => {
       ...(search && { search }),
       ...(sortBy && { sortBy }),
     };
-    
+
     const params = new URLSearchParams(queryParams);
-    
+
     try {
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/products?${params.toString()}`,
         {
           method: "GET",
-          headers: { "Content-Type": "application/json" ,Authorization:`Bearer ${token}`},
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
       const data = await res.json();
       setProducts(data.products);
       setPage(data.currentPage);
-      console.log(data.products)
+      setFetched(true);
+      //console.log(data.products);
     } catch (e) {
       console.error(e);
+      throw e;
     } finally {
       setLoading(false);
     }
   };
 
   const getProductById = async (id) => {
+    setLoading(true);
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/products/${id}`
+        `${import.meta.env.VITE_API_URL}/api/products/${id}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       const data = await res.json();
       setProduct(data);
     } catch (e) {
       console.error(e);
+      throw e;
     } finally {
       setLoading(false);
     }
   };
 
   const createProduct = async (product) => {
+    console.log(product)
+    setLoading(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/products`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(product),
       });
       const data = await res.json();
+      console.log(data);
     } catch (e) {
       console.error(e);
+      throw e;
     } finally {
       setLoading(false);
     }
   };
 
   const updateProduct = async (product) => {
-    //testear si agarra sin el parametro de id
+    setLoading(true);
+    const { _id, ...rest } = product;
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/products`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(product),
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/products/${_id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(rest),
+        }
+      );
       const data = await res.json();
+      setProducts((prevProducts) =>
+        prevProducts.map((p) => (p._id === _id ? { ...p, ...rest } : p))
+      );
+      console.log(data);
+      return data;
     } catch (e) {
       console.error(e);
+      throw e;
     } finally {
       setLoading(false);
     }
   };
 
   const deleteProduct = async (id) => {
+    setLoading(true);
     try {
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/products/${id}`,
         {
           method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
       const data = await res.json();
+      console.log(data);
     } catch (e) {
       console.error(e);
+      throw e;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getCategories = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/categories`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await res.json();
+      console.log(data)
+      setCategories(data);
+    } catch (e) {
+      console.error(e);
+      throw e;
     } finally {
       setLoading(false);
     }
@@ -104,6 +180,7 @@ export const ProductProvider = ({ children }) => {
       value={{
         products,
         product,
+        categories,
         page,
         loading,
         getProducts,
@@ -111,6 +188,7 @@ export const ProductProvider = ({ children }) => {
         createProduct,
         updateProduct,
         deleteProduct,
+        getCategories,
       }}
     >
       {children}
