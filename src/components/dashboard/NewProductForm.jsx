@@ -43,27 +43,45 @@ export default function NewProductForm({ onExit = true }) {
     const updatedVariants = product.variants.filter((_, i) => i !== index);
     setProduct({ ...product, variants: updatedVariants });
   };
+
   const handleChange = (name, value) => {
-    let updatedProduct = { ...product };
+    let newValue = value;
 
     if (name === "price") {
-      updatedProduct[name] = value === "" ? "" : Number(value);
-    } else {
-      updatedProduct[name] = value;
+      const numericValue = value.replace(/[^0-9]/g, "");
+
+      if (product.price === 0 && numericValue !== "") {
+        newValue = parseInt(numericValue, 10).toString();
+      } else {
+        newValue = numericValue;
+      }
+
+      if (newValue === "") {
+        newValue = "0";
+      }
     }
 
-    setProduct(updatedProduct);
+    setProduct({ ...product, [name]: newValue });
   };
 
   const handleVariantsChange = (index, name, value) => {
     const updatedVariants = [...product.variants];
-
+    let newValue=value;
     if (name === "price") {
-      updatedVariants[index][name] = value === "" ? "" : Number(value);
-    } else {
-      updatedVariants[index][name] = value;
-    }
+      const numericValue = value.replace(/[^0-9]/g, "");
 
+      if (product.price === 0 && numericValue !== "") {
+        newValue = parseInt(numericValue, 10).toString();
+      } else {
+        newValue = numericValue;
+      }
+
+      if (newValue === "") {
+        newValue = "0";
+      }
+    }
+    updatedVariants[index][name]=newValue
+    console.log(updatedVariants)
     setProduct({ ...product, variants: updatedVariants });
   };
 
