@@ -3,6 +3,7 @@ import { useProduct } from "../../context/product/ProductContext";
 import ProductTable from "../../components/dashboard/ProductTable";
 import ProductFormModal from "../../components/dashboard/ProductFormModal";
 import NewProductForm from "../../components/dashboard/NewProductForm";
+import CategoriesDropdown from "../../components/dashboard/categoriesDropdown";
 
 export default function Products() {
   const {
@@ -18,6 +19,7 @@ export default function Products() {
   const [editProductId, setEditProductId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [addProduct, setAddProduct] = useState(false);
+  const [addCategory, setAddCategory] = useState(false);
 
   useEffect(() => {
     getProducts({ page: 1, limit: 10 });
@@ -35,6 +37,14 @@ export default function Products() {
         <NewProductForm onExit={() => setAddProduct(false)} />
       </ProductFormModal>
 
+      <button onClick={() => setAddCategory(true)}>Categorías...</button>
+
+      <ProductFormModal
+        isOpen={addCategory}
+        onClose={() => setAddCategory(false)}
+      >
+        <CategoriesDropdown onExit={() => setAddCategory(false)} />
+      </ProductFormModal>
       <ProductTable
         products={products}
         loading={loading}
