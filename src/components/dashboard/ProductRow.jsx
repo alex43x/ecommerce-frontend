@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import VariantsTable from "./VariantsTable"; // Asegúrate que esté el path correcto
 
 export default function ProductRow({
@@ -12,6 +12,8 @@ export default function ProductRow({
   deleteProduct,
   refreshProducts,
 }) {
+  const [error, setError] = useState("");
+
   const isEditing = editProductId === product._id;
 
   const handleChange = (e) => {
@@ -35,22 +37,21 @@ export default function ProductRow({
 
   const validateForm = () => {
     if (!editForm.name.trim()) {
-      alert("El nombre es obligatorio.");
+      setError("El nombre es obligatorio.");
       return false;
     }
     if (editForm.price <= 0) {
-      alert("El precio debe ser mayor que cero.");
+      setError("El precio debe ser mayor que cero.");
       return false;
     }
     if (!editForm.imageURL.trim()) {
-      alert("La URL de la imagen es obligatoria.");
+      setError("La URL de la imagen es obligatoria.");
       return false;
     }
     if (editForm.category.length === 0) {
-      alert("Debe seleccionar al menos una categoría.");
+      setError("Debe seleccionar al menos una categoría.");
       return false;
     }
-    // Validar variantes si es que están presentes
     if (
       editForm.variants?.some(
         (variant) =>
@@ -59,9 +60,10 @@ export default function ProductRow({
           !variant.abreviation?.trim()
       )
     ) {
-      alert("Las variantes deben tener abreviación, nombre y precio.");
+      setError("Las variantes deben tener abreviación, nombre y precio.");
       return false;
     }
+    setError(""); // Sin errores
     return true;
   };
 
@@ -152,6 +154,7 @@ export default function ProductRow({
           product.imageURL
         )}
       </td>
+      {error && <div style={{ color: "red", marginTop: "5px" }}>{error}</div>}
       <td>
         {isEditing ? (
           <div>

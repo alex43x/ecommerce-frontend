@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 
 export default function VariantsTable({ variants, onEdit, editing = false }) {
   const [editData, setEditData] = useState([]);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     setEditData(variants);
@@ -10,6 +11,19 @@ export default function VariantsTable({ variants, onEdit, editing = false }) {
   const handleChange = (index, field, value) => {
     const updatedVariants = [...editData];
     updatedVariants[index] = { ...updatedVariants[index], [field]: value };
+
+    // Validar aquí
+    if (field === "price" && value <= 0) {
+      setError("El precio debe ser mayor que 0.");
+    } else if (
+      (field === "abreviation" || field === "variantName") &&
+      value.trim() === ""
+    ) {
+      setError("La abreviación y nombre no pueden estar vacíos.");
+    } else {
+      setError("");
+    }
+
     setEditData(updatedVariants);
     onEdit(updatedVariants);
   };
@@ -21,6 +35,7 @@ export default function VariantsTable({ variants, onEdit, editing = false }) {
     ];
     setEditData(updated);
     onEdit(updated);
+    setError(""); // Limpiar error al agregar
   };
 
   const removeVariant = (index) => {
@@ -34,6 +49,7 @@ export default function VariantsTable({ variants, onEdit, editing = false }) {
       <table>
         <thead>
           <tr>
+            <th>Código de Barras</th>
             <th>Abreviación</th>
             <th>Nombre</th>
             <th>Precio</th>
@@ -43,6 +59,20 @@ export default function VariantsTable({ variants, onEdit, editing = false }) {
         <tbody>
           {editData.map((variant, index) => (
             <tr key={index}>
+              <td>
+                {editing ? (
+                  <input
+                    type="text"
+                    autoFocus
+                    value={variant.barcode || ""}
+                    onChange={(e) =>
+                      handleChange(index, "barcode", e.target.value)
+                    }
+                  />
+                ) : (
+                  variant.barcode
+                )}
+              </td>
               <td>
                 {editing ? (
                   <input
@@ -92,6 +122,8 @@ export default function VariantsTable({ variants, onEdit, editing = false }) {
           ))}
         </tbody>
       </table>
+      {error && <div style={{ color: "red", marginTop: "10px" }}>{error}</div>}
+
       {editing && (
         <button style={{ marginTop: "10px" }} onClick={addVariant}>
           ➕ Agregar Variante
