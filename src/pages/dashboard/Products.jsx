@@ -14,6 +14,9 @@ export default function Products() {
     categories,
     loading,
     getCategories,
+    page,
+    setPage,
+    totalPages,
   } = useProduct();
 
   const [editProductId, setEditProductId] = useState(null);
@@ -22,9 +25,17 @@ export default function Products() {
   const [addCategory, setAddCategory] = useState(false);
 
   useEffect(() => {
-    getProducts({ page: 1, limit: 10 });
-    getCategories();
+    const fetchData = async () => {
+      try {
+        await getProducts({ page: page, limit: 10,forceRefresh:true });
+        await getCategories();
+      } catch (e) {
+        console.error("Error fetching data:", e);
+      }
+    };
+    fetchData();
   }, []);
+
 
   return (
     <div>
@@ -56,9 +67,26 @@ export default function Products() {
         updateProduct={updateProduct}
         deleteProduct={deleteProduct}
         refreshProducts={() =>
-          getProducts({ page: 1, limit: 10, forceRefresh: true })
+          getProducts({ page: page, limit: 10, forceRefresh: true })
         }
       />
+      <button
+        disabled={page ==1}
+        onClick={() => {
+          setPage(page - 1);
+        }}
+      >
+        Anterior
+      </button>
+      <span>{page}</span>
+      <button
+        disabled={page == totalPages}
+        onClick={() => {
+          setPage(Number(page) + 1);
+        }}
+      >
+        Siguiente
+      </button>
     </div>
   );
 }

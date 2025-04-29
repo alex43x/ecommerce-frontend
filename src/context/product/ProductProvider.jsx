@@ -6,6 +6,7 @@ export const ProductProvider = ({ children }) => {
   const [product, setProduct] = useState(null);
   const [categories, setCategories] = useState([]);
   const [page, setPage] = useState(1);
+  const [totalPages,setTotalPages]=useState(1);
   const [loading, setLoading] = useState(true);
   const [fetchedProducts, setFetchedProducts] = useState(false);
   const [fetchedCategories, setFetchedCategories] = useState(false);
@@ -21,6 +22,7 @@ export const ProductProvider = ({ children }) => {
   }) => {
     if (fetchedProducts && !forceRefresh) return;
     setLoading(true);
+    console.log(limit)
     const queryParams = {
       page,
       limit,
@@ -45,6 +47,7 @@ export const ProductProvider = ({ children }) => {
       const data = await res.json();
       setProducts(data.products);
       setPage(data.currentPage);
+      setTotalPages(data.totalPages)
       setFetchedProducts(true);
       //console.log(data.products);
     } catch (e) {
@@ -262,6 +265,8 @@ export const ProductProvider = ({ children }) => {
         product,
         categories,
         page,
+        setPage,
+        totalPages,
         loading,
         getProducts,
         getProductById,
