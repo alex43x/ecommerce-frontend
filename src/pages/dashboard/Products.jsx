@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { debounce } from "lodash";
 import { useProduct } from "../../context/product/ProductContext";
 import ProductTable from "../../components/dashboard/ProductTable";
 import ProductFormModal from "../../components/dashboard/ProductFormModal";
 import NewProductForm from "../../components/dashboard/NewProductForm";
-import CategoriesDropdown from "../../components/dashboard/categoriesDropdown";
+import CategoriesMenu from "../../components/dashboard/CategoriesMenu";
+
+import Dropdown from "../../components/dashboard/FilterDropdown";
 
 export default function Products() {
   const {
@@ -14,8 +17,6 @@ export default function Products() {
     categories,
     loading,
     getCategories,
-    page,
-    setPage,
     totalPages,
   } = useProduct();
 
@@ -23,24 +24,51 @@ export default function Products() {
   const [editForm, setEditForm] = useState({});
   const [addProduct, setAddProduct] = useState(false);
   const [addCategory, setAddCategory] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+  const sortOptions = [
+    { label: "Fecha ↓", value: "dateDesc" },
+    { label: "Fecha ↑", value: "dateAsc" },
+    { label: "Precio ↓", value: "priceDesc" },
+    { label: "Precio ↑", value: "priceAsc" },
+    { label: "Nombre A-Z", value: "nameAsc" },
+    { label: "Nombre Z-A", value: "nameDesc" },
+  ];
+  const categoryOptions = [
+    { label: "Todas las categorías", value: "" },
+    ...categories.map((cat) => ({
+      label: cat.name,
+      value: cat.name,
+    })),
+  ];
+
+  const [filters, setFilters] = useState({
+    page: 1,
+    search: "",
+    sortBy: "dateDesc",
+    category: "",
+  });
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        await getProducts({ page: page, limit: 10,forceRefresh:true });
-        await getCategories();
-      } catch (e) {
-        console.error("Error fetching data:", e);
-      }
-    };
-    fetchData();
+    getCategories();
   }, []);
 
+  useEffect(() => {
+    getProducts({ ...filters, limit: 15 });
+  }, [filters]);
+
+  // 🔹 Debounce del input de búsqueda
+  useEffect(() => {
+    const delayedSearch = debounce(() => {
+      setFilters((f) => ({ ...f, search: searchInput, page: 1 }));
+    }, 500);
+
+    delayedSearch();
+    return delayedSearch.cancel;
+  }, [searchInput]);
 
   return (
     <div>
       <button onClick={() => setAddProduct(true)}>Agregar producto</button>
-
       <ProductFormModal
         isOpen={addProduct}
         onClose={() => setAddProduct(false)}
@@ -49,13 +77,37 @@ export default function Products() {
       </ProductFormModal>
 
       <button onClick={() => setAddCategory(true)}>Categorías...</button>
-
       <ProductFormModal
         isOpen={addCategory}
         onClose={() => setAddCategory(false)}
       >
-        <CategoriesDropdown onExit={() => setAddCategory(false)} />
+        <CategoriesMenu onExit={() => setAddCategory(false)} />
       </ProductFormModal>
+
+      <input
+        type="text"
+        value={searchInput}
+        onChange={(e) => setSearchInput(e.target.value)}
+      />
+
+      <Dropdown
+        items={categoryOptions}
+        selected={categoryOptions.find((opt) => opt.value === filters.category)}
+        onSelect={(option) =>
+          setFilters((f) => ({ ...f, category: option.value, page: 1 }))
+        }
+        placeholder="Por categoría"
+      />
+
+      <Dropdown
+        items={sortOptions}
+        selected={sortOptions.find((opt) => opt.value === filters.sortBy)}
+        onSelect={(option) =>
+          setFilters((f) => ({ ...f, sortBy: option.value, page: 1 }))
+        }
+        placeholder="Ordenar por"
+      />
+
       <ProductTable
         products={products}
         loading={loading}
@@ -67,23 +119,20 @@ export default function Products() {
         updateProduct={updateProduct}
         deleteProduct={deleteProduct}
         refreshProducts={() =>
-          getProducts({ page: page, limit: 10, forceRefresh: true })
+          getProducts({ ...filters, limit: 10, forceRefresh: true })
         }
       />
+
       <button
-        disabled={page ==1}
-        onClick={() => {
-          setPage(page - 1);
-        }}
+        disabled={filters.page === 1}
+        onClick={() => setFilters((f) => ({ ...f, page: f.page - 1 }))}
       >
         Anterior
       </button>
-      <span>{page}</span>
+      <span>{filters.page}</span>
       <button
-        disabled={page == totalPages}
-        onClick={() => {
-          setPage(Number(page) + 1);
-        }}
+        disabled={filters.page === totalPages}
+        onClick={() => setFilters((f) => ({ ...f, page: f.page + 1 }))}
       >
         Siguiente
       </button>

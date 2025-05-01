@@ -6,12 +6,13 @@ export const ProductProvider = ({ children }) => {
   const [product, setProduct] = useState(null);
   const [categories, setCategories] = useState([]);
   const [page, setPage] = useState(1);
-  const [totalPages,setTotalPages]=useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [fetchedProducts, setFetchedProducts] = useState(false);
   const [fetchedCategories, setFetchedCategories] = useState(false);
+  const [lastFetchParams, setLastFetchParams] = useState({});
   const token = localStorage.getItem("AuthToken");
-
+  
   const getProducts = async ({
     page = 1,
     limit = 10,
@@ -20,9 +21,19 @@ export const ProductProvider = ({ children }) => {
     sortBy = null,
     forceRefresh = false,
   }) => {
-    if (fetchedProducts && !forceRefresh) return;
+    const currentParams = { page, limit, category, search, sortBy };
+  
+    //Si ya se hizo fetch con estos filtros y no se fuerza, evita la llamada
+    if (
+      !forceRefresh &&
+      fetchedProducts &&
+      JSON.stringify(currentParams) === JSON.stringify(lastFetchParams)
+    ) {
+      return;
+    }
+  
     setLoading(true);
-    console.log(limit)
+  
     const queryParams = {
       page,
       limit,
@@ -30,9 +41,9 @@ export const ProductProvider = ({ children }) => {
       ...(search && { search }),
       ...(sortBy && { sortBy }),
     };
-
+  
     const params = new URLSearchParams(queryParams);
-
+  
     try {
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/products?${params.toString()}`,
@@ -47,9 +58,10 @@ export const ProductProvider = ({ children }) => {
       const data = await res.json();
       setProducts(data.products);
       setPage(data.currentPage);
-      setTotalPages(data.totalPages)
+      setTotalPages(data.totalPages);
       setFetchedProducts(true);
-      //console.log(data.products);
+      setLastFetchParams(currentParams); // Guarda los filtros usados
+      console.log(products)
     } catch (e) {
       console.error(e);
       throw e;
@@ -57,6 +69,7 @@ export const ProductProvider = ({ children }) => {
       setLoading(false);
     }
   };
+  
 
   const getProductById = async (id) => {
     setLoading(true);
@@ -254,7 +267,7 @@ export const ProductProvider = ({ children }) => {
       console.error(e);
       throw e;
     } finally {
-      setLoading(true);
+      setLoading(false);
     }
   };
 

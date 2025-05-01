@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useProduct } from "../../context/product/ProductContext";
 
-export default function CategoriesDropdown({ onExit = () => {} }) {
+export default function CategoriesMenu({ onExit = () => {} }) {
   const {
     getCategories,
     getProducts,
