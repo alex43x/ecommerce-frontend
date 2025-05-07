@@ -9,6 +9,7 @@ export default function ConfigAdmin() {
   const [editUser, setEditUser] = useState(false);
   const [addUser, setAddUser] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+ 
 
   const { user } = useAuth();
   const { users, getUsers } = useUser();
@@ -31,6 +32,7 @@ export default function ConfigAdmin() {
       >
         Añadir➕
       </button>
+      
       <table>
         <thead>
           <tr>
@@ -50,7 +52,7 @@ export default function ConfigAdmin() {
               <td>{u.email}</td>
               <td>
                 <button
-                  disabled={u.role==="admin"}
+                  disabled={u.role==="admin" && u.name!==user.name}
                   onClick={() => {
                     setSelectedUser(u);
                     setEditUser(true);
