@@ -1,10 +1,10 @@
 import React,{useEffect} from "react";
-import { useProduct } from "../../context/product/ProductContext";
+import { useSale } from "../../context/sale/SaleContext";
 
 export default function Sales() {
-  const { getProducts, products, loading } = useProduct();
+  const { getSales,page, sales, loading } = useSale();
   useEffect(() => {
-    getProducts(1, 10);
+    getSales(1, 10);
   }, []);
 
   return(
@@ -12,7 +12,7 @@ export default function Sales() {
         {loading ? (
         <p>Cargando...</p>
       ) : (
-        products.map((product) => <p>{product.name} {product.price} </p>)
+        sales.map((sale) => <p key={sale._id}> monto:{(sale.totalAmount).toFixed()} </p>)
       )}
     </div>
   )
