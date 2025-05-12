@@ -2,38 +2,41 @@ import React, { useState } from "react";
 import { ProductContext } from "./ProductContext";
 
 export const ProductProvider = ({ children }) => {
-  const [products, setProducts] = useState([]);
+  const [productsByCategory, setProductsByCategory] = useState({});
   const [product, setProduct] = useState(null);
   const [categories, setCategories] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [fetchedProducts, setFetchedProducts] = useState(false);
   const [fetchedCategories, setFetchedCategories] = useState(false);
   const [lastFetchParams, setLastFetchParams] = useState({});
   const token = localStorage.getItem("AuthToken");
-  
+
   const getProducts = async ({
     page = 1,
     limit = 10,
-    category = null,
+    category = "general",
     search = null,
     sortBy = null,
     forceRefresh = false,
   }) => {
     const currentParams = { page, limit, category, search, sortBy };
-  
-    //Si ya se hizo fetch con estos filtros y no se fuerza, evita la llamada
+
     if (
       !forceRefresh &&
-      fetchedProducts &&
-      JSON.stringify(currentParams) === JSON.stringify(lastFetchParams)
+      lastFetchParams[category] &&
+      JSON.stringify(currentParams) ===
+        JSON.stringify(lastFetchParams[category])
     ) {
-      return;
+      return {
+        products: productsByCategory[category] || [],
+        totalPages,
+        currentPage: page,
+      };
     }
-  
+
     setLoading(true);
-  
+
     const queryParams = {
       page,
       limit,
@@ -41,9 +44,9 @@ export const ProductProvider = ({ children }) => {
       ...(search && { search }),
       ...(sortBy && { sortBy }),
     };
-  
+
     const params = new URLSearchParams(queryParams);
-  
+
     try {
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/products?${params.toString()}`,
@@ -56,12 +59,26 @@ export const ProductProvider = ({ children }) => {
         }
       );
       const data = await res.json();
-      setProducts(data.products);
+      console.log(data);
+
+      setProductsByCategory((prev) => ({
+        ...prev,
+        [category]: data.products,
+      }));
       setPage(data.currentPage);
       setTotalPages(data.totalPages);
-      setFetchedProducts(true);
-      setLastFetchParams(currentParams); // Guarda los filtros usados
-      console.log(products)
+
+      setLastFetchParams((prev) => ({
+        ...prev,
+        [category]: currentParams,
+      }));
+
+      // ✅ Este return permite usar los productos en componentes como Foods
+      return {
+        products: data.products,
+        totalPages: data.totalPages,
+        currentPage: data.currentPage,
+      };
     } catch (e) {
       console.error(e);
       throw e;
@@ -69,7 +86,6 @@ export const ProductProvider = ({ children }) => {
       setLoading(false);
     }
   };
-  
 
   const getProductById = async (id) => {
     setLoading(true);
@@ -95,7 +111,6 @@ export const ProductProvider = ({ children }) => {
   };
 
   const createProduct = async (product) => {
-    console.log(product);
     setLoading(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/products`, {
@@ -132,9 +147,6 @@ export const ProductProvider = ({ children }) => {
         }
       );
       const data = await res.json();
-      setProducts((prevProducts) =>
-        prevProducts.map((p) => (p._id === _id ? { ...p, ...rest } : p))
-      );
       console.log(data);
       return data;
     } catch (e) {
@@ -160,6 +172,7 @@ export const ProductProvider = ({ children }) => {
       );
       const data = await res.json();
       console.log(data);
+      return data;
     } catch (e) {
       console.error(e);
       throw e;
@@ -183,7 +196,6 @@ export const ProductProvider = ({ children }) => {
         }
       );
       const data = await res.json();
-      console.log(data);
       setCategories(data);
     } catch (e) {
       console.error(e);
@@ -196,7 +208,6 @@ export const ProductProvider = ({ children }) => {
 
   const createCategory = async (category = {}) => {
     setLoading(true);
-    console.log(category);
     try {
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/categories`,
@@ -222,7 +233,6 @@ export const ProductProvider = ({ children }) => {
   const updateCategory = async (category) => {
     setLoading(true);
     const { _id, ...rest } = category;
-    console.log(category);
     try {
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/categories/${_id}`,
@@ -247,7 +257,6 @@ export const ProductProvider = ({ children }) => {
   };
 
   const deleteCategory = async (_id) => {
-    console.log("a", _id);
     setLoading(true);
     try {
       const res = await fetch(
@@ -274,7 +283,7 @@ export const ProductProvider = ({ children }) => {
   return (
     <ProductContext.Provider
       value={{
-        products,
+        productsByCategory,
         product,
         categories,
         page,
