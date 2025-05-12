@@ -5,7 +5,6 @@ import ProductTable from "../../components/dashboard/ProductTable";
 import ProductFormModal from "../../components/dashboard/ProductFormModal";
 import NewProductForm from "../../components/dashboard/NewProductForm";
 import CategoriesMenu from "../../components/dashboard/CategoriesMenu";
-
 import Dropdown from "../../components/dashboard/FilterDropdown";
 
 export default function Products() {
@@ -13,18 +12,20 @@ export default function Products() {
     getProducts,
     updateProduct,
     deleteProduct,
-    products,
     categories,
     loading,
     getCategories,
-    totalPages,
   } = useProduct();
+
+  const [products, setProducts] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
 
   const [editProductId, setEditProductId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [addProduct, setAddProduct] = useState(false);
   const [addCategory, setAddCategory] = useState(false);
   const [searchInput, setSearchInput] = useState("");
+
   const sortOptions = [
     { label: "Fecha ↓", value: "dateDesc" },
     { label: "Fecha ↑", value: "dateAsc" },
@@ -33,6 +34,7 @@ export default function Products() {
     { label: "Nombre A-Z", value: "nameAsc" },
     { label: "Nombre Z-A", value: "nameDesc" },
   ];
+
   const categoryOptions = [
     { label: "Todas las categorías", value: "" },
     ...categories.map((cat) => ({
@@ -53,10 +55,12 @@ export default function Products() {
   }, []);
 
   useEffect(() => {
-    getProducts({ ...filters, limit: 15 });
+    getProducts({ ...filters, limit: 15 }).then((res) => {
+      setProducts(res.products || []);
+      setTotalPages(res.totalPages || 1);
+    });
   }, [filters]);
 
-  // 🔹 Debounce del input de búsqueda
   useEffect(() => {
     const delayedSearch = debounce(() => {
       setFilters((f) => ({ ...f, search: searchInput, page: 1 }));
@@ -69,18 +73,12 @@ export default function Products() {
   return (
     <div>
       <button onClick={() => setAddProduct(true)}>Agregar producto</button>
-      <ProductFormModal
-        isOpen={addProduct}
-        onClose={() => setAddProduct(false)}
-      >
+      <ProductFormModal isOpen={addProduct} onClose={() => setAddProduct(false)}>
         <NewProductForm onExit={() => setAddProduct(false)} />
       </ProductFormModal>
 
       <button onClick={() => setAddCategory(true)}>Categorías...</button>
-      <ProductFormModal
-        isOpen={addCategory}
-        onClose={() => setAddCategory(false)}
-      >
+      <ProductFormModal isOpen={addCategory} onClose={() => setAddCategory(false)}>
         <CategoriesMenu onExit={() => setAddCategory(false)} />
       </ProductFormModal>
 
@@ -119,7 +117,10 @@ export default function Products() {
         updateProduct={updateProduct}
         deleteProduct={deleteProduct}
         refreshProducts={() =>
-          getProducts({ ...filters, limit: 10, forceRefresh: true })
+          getProducts({ ...filters, limit: 15, forceRefresh: true }).then((res) => {
+            setProducts(res.products || []);
+            setTotalPages(res.totalPages || 1);
+          })
         }
       />
 

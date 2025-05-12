@@ -10,21 +10,21 @@ export default function DashboardLayout() {
     <div className="min-h-screen flex">
       <button
         onClick={() => {
-          nav("/Dashboard");
+          nav("/dashboard");
         }}
       >
         Dashboard
       </button>
       <button
         onClick={() => {
-          nav("/Pos");
+          nav("/pos");
         }}
       >
         Ir al pos
       </button>
       <button
         onClick={() => {
-          nav("/Config");
+          nav("/config");
         }}
       >
         Configuración
