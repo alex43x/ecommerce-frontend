@@ -3,31 +3,33 @@ import { useCart } from "../../context/cart/CartContext";
 
 export default function ProductContainer({ product }) {
   const { cart, addToCart } = useCart();
-  const [selectedVariant, setSelectedVariant] = useState({
-    _id: product.variants[0]._id,
-    variantName: product.variants[0].variantName || "",
-    price: product.variants[0].price || 0,
-    iva: product.variants[0].iva || 0,
-    quantity: 0,
-    index: 0,
-  });
-
-  // 👉 Cuando cambia el producto, actualiza el estado
-  useEffect(() => {
-    setSelectedVariant({
-      _id: product.variants[0]._id,
-      variantName: product.variants[0].variantName || "",
-      price: product.variants[0].price || 0,
-      iva: product.variants[0].iva || 0,
-      quantity: getQuantity(product.variants[0]._id),
-      index: 0,
-    });
-  }, [product]);
 
   const getQuantity = (variantId) => {
     const found = cart.find((item) => item.productId === variantId);
     return found ? found.quantity : 0;
   };
+
+  const [selectedVariant, setSelectedVariant] = useState(() => {
+    const v = product.variants[0];
+    return {
+      _id: v._id,
+      variantName: v.variantName || "",
+      price: v.price || 0,
+      iva: v.iva || 0,
+      quantity: getQuantity(v._id),
+      index: 0,
+    };
+  });
+
+  // ✅ Actualiza cantidad desde cart cada vez que cambian cart o product
+  useEffect(() => {
+    const v = product.variants[selectedVariant.index] || product.variants[0];
+    setSelectedVariant((prev) => ({
+      ...v,
+      index: prev.index,
+      quantity: getQuantity(v._id),
+    }));
+  }, [cart, product]);
 
   return (
     <div key={product._id}>
@@ -56,10 +58,6 @@ export default function ProductContainer({ product }) {
           disabled={selectedVariant.quantity === 0}
           onClick={() => {
             addToCart({ product, variant: selectedVariant, quantity: -1 });
-            setSelectedVariant((prev) => ({
-              ...prev,
-              quantity: Math.max(0, prev.quantity - 1),
-            }));
           }}
         >
           -
@@ -68,10 +66,6 @@ export default function ProductContainer({ product }) {
         <button
           onClick={() => {
             addToCart({ product, variant: selectedVariant, quantity: 1 });
-            setSelectedVariant((prev) => ({
-              ...prev,
-              quantity: prev.quantity + 1,
-            }));
           }}
         >
           +

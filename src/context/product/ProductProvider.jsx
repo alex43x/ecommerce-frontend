@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ProductContext } from "./ProductContext";
-
+import { useCart } from "../cart/CartContext";
 export const ProductProvider = ({ children }) => {
   const [productsByCategory, setProductsByCategory] = useState({});
   const [product, setProduct] = useState(null);
@@ -102,6 +102,34 @@ export const ProductProvider = ({ children }) => {
       );
       const data = await res.json();
       setProduct(data);
+    } catch (e) {
+      console.error(e);
+      throw e;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getProductByBarcode = async (barcode) => {
+    setLoading(true);
+    console.log(barcode);
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/products/barcode/${barcode}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const product = await res.json();
+      if (product) {
+        setProduct(product);
+      } else {
+        alert("Producto no encontrado");
+      }
     } catch (e) {
       console.error(e);
       throw e;
@@ -299,6 +327,7 @@ export const ProductProvider = ({ children }) => {
         createCategory,
         updateCategory,
         deleteCategory,
+        getProductByBarcode,
       }}
     >
       {children}

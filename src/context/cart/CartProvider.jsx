@@ -8,6 +8,7 @@ export const CartProvider = ({ children }) => {
 
 
   const addToCart = ({ product, variant, quantity = 1 }) => {
+    console.log(variant)
     const variantName = variant.variantName;
     const productName =
       product.variants.length === 1 && variantName.toLowerCase() === "normal"

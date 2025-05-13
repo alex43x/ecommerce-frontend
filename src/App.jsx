@@ -12,6 +12,7 @@ import { SaleProvider } from "./context/sale/SaleProvider";
 import { UserProvider } from "./context/user/UserProvider";
 import ConfigAdmin from "./pages/config/ConfigAdmin";
 import PosLayout from "./layouts/PosLayout";
+import { CartProvider } from "./context/cart/CartProvider";
 
 function App() {
   return (
@@ -46,7 +47,18 @@ function App() {
       {/* Rutas para Admin y Users */}
       <Route element={<ProtectedRoute allowedRoles={["admin", "cashier"]} />}>
         <Route path="/" element={<PosLayout />}>
-          <Route path="/pos" element={<POS />} />
+          <Route
+            path="/pos"
+            element={
+              <SaleProvider>
+                <CartProvider>
+                  <ProductProvider>
+                    <POS />
+                  </ProductProvider>
+                </CartProvider>
+              </SaleProvider>
+            }
+          />
         </Route>
       </Route>
     </Routes>
