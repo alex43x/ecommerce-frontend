@@ -16,7 +16,7 @@ export default function OrderView({ onConfirm = () => {} }) {
         quantity: item.quantity,
         iva: item.iva,
         totalPrice: item.totalPrice,
-        name: item.name, // opcional, si querés mostrar en el cliente
+        name: item.name, 
       })),
       totalAmount,
       ruc: "Sin RUC",
