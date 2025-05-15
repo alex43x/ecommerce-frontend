@@ -4,11 +4,12 @@ import { useProduct } from "../../context/product/ProductContext";
 import { useCart } from "../../context/cart/CartContext";
 
 export default function Foods({ categories }) {
-  const { getProducts, productsByCategory, getProductByBarcode, product } =
+  const { getProducts, productsByCategory, getProductByBarcode, product,clearProduct } =
     useProduct();
   const { addToCart, cart } = useCart();
   const [category, setCategory] = useState("noBebidas");
   const [barcode, setBarcode] = useState("");
+  const [triggeredByScan, setTriggeredByScan] = useState(false);
 
   useEffect(() => {
     if (!productsByCategory[category]) {
@@ -16,42 +17,51 @@ export default function Foods({ categories }) {
     }
   }, [category]);
 
-  useEffect(() => {
-    if (product) {
-      console.log(product);
-      const variantObj = product.variants;
+ useEffect(() => {
+  if (!triggeredByScan) return;
 
-      const productFormatted = {
-        ...product,
-        variants: [variantObj], // 👉 importante: lo convertimos en array
-      };
+  if (product && !product.message) {
+    const variantObj = product.variants;
 
-      const foundInCart = cart.find(
-        (item) => item.productId === variantObj._id
-      );
-      const quantity = foundInCart ? foundInCart.quantity : 0;
+    const productFormatted = {
+      ...product,
+      variants: [variantObj],
+    };
 
-      const formattedVariant = {
-        ...variantObj,
-        quantity,
-        index: 0,
-      };
+    const foundInCart = cart.find(
+      (item) => item.productId === variantObj._id
+    );
+    const quantity = foundInCart ? foundInCart.quantity : 0;
 
-      addToCart({
-        product: productFormatted,
-        variant: formattedVariant,
-        quantity: 1,
-      });
-    }
-  }, [product]);
+    const formattedVariant = {
+      ...variantObj,
+      quantity,
+      index: 0,
+    };
+
+    addToCart({
+      product: productFormatted,
+      variant: formattedVariant,
+      quantity: 1,
+    });
+  } else if (product?.message) {
+    alert("No existe producto con ese código");
+  }
+
+  setTriggeredByScan(false);
+  clearProduct(); // ✅ limpia producto
+}, [product]);
+
 
   const foods = productsByCategory[category];
   const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      getProductByBarcode(barcode);
-      setBarcode("");
-    }
-  };
+  if (e.key === "Enter") {
+    getProductByBarcode(barcode);
+    setTriggeredByScan(true); // 👉 esta línea es crucial
+    setBarcode("");
+  }
+};
+
 
   if (!foods) return <p>Cargando productos...</p>;
 

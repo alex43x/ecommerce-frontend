@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { ProductContext } from "./ProductContext";
-import { useCart } from "../cart/CartContext";
 export const ProductProvider = ({ children }) => {
   const [productsByCategory, setProductsByCategory] = useState({});
   const [product, setProduct] = useState(null);
@@ -137,6 +136,8 @@ export const ProductProvider = ({ children }) => {
       setLoading(false);
     }
   };
+
+  const clearProduct = () => setProduct(null);
 
   const createProduct = async (product) => {
     setLoading(true);
@@ -318,6 +319,7 @@ export const ProductProvider = ({ children }) => {
         setPage,
         totalPages,
         loading,
+        clearProduct,
         getProducts,
         getProductById,
         createProduct,
