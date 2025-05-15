@@ -13,6 +13,7 @@ import { UserProvider } from "./context/user/UserProvider";
 import ConfigAdmin from "./pages/config/ConfigAdmin";
 import PosLayout from "./layouts/PosLayout";
 import { CartProvider } from "./context/cart/CartProvider";
+import { ReportProvider } from "./context/report/ReportProvider";
 
 function App() {
   return (
@@ -27,11 +28,16 @@ function App() {
           <Route
             path="/dashboard"
             element={
-              <SaleProvider>
-                <ProductProvider>
-                  <Dashboard />
-                </ProductProvider>
-              </SaleProvider>
+              <UserProvider>
+                <SaleProvider>
+                  <ProductProvider>
+                    <ReportProvider>
+                      {" "}
+                      <Dashboard />
+                    </ReportProvider>
+                  </ProductProvider>
+                </SaleProvider>
+              </UserProvider>
             }
           />
           <Route
