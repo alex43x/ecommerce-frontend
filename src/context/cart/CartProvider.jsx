@@ -4,11 +4,10 @@ import { CartContext } from "./CartContext";
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
-  const [paymentMethod,setPaymentMethod]=useState("")
-
+  const [paymentMethod, setPaymentMethod] = useState("");
 
   const addToCart = ({ product, variant, quantity = 1 }) => {
-    console.log(variant)
+    console.log(variant);
     const variantName = variant.variantName;
     const productName =
       product.variants.length === 1 && variantName.toLowerCase() === "normal"
@@ -16,8 +15,9 @@ export const CartProvider = ({ children }) => {
         : `${product.name} ${variantName}`;
 
     const newItem = {
-      productId: variant._id,
+      productId: product._id,
       name: productName,
+      variantId: variant._id,
       price: variant.price,
       quantity,
       iva: (variant.price / 11).toFixed() || 0,
@@ -27,7 +27,7 @@ export const CartProvider = ({ children }) => {
 
     setCart((prevCart) => {
       const index = prevCart.findIndex(
-        (item) => item.productId === newItem.productId
+        (item) => item.variantId === newItem.variantId
       );
 
       if (index !== -1) {
@@ -54,19 +54,33 @@ export const CartProvider = ({ children }) => {
   };
 
   const removeFromCart = (productId) => {
-    setCart((prevCart) => prevCart.filter((item) => item.productId !== productId));
+    setCart((prevCart) =>
+      prevCart.filter((item) => item.productId !== productId)
+    );
   };
 
-  const totalAmount = cart.reduce((sum, item) => sum + item.totalPrice, 0).toFixed();
+  const totalAmount = cart
+    .reduce((sum, item) => sum + item.totalPrice, 0)
+    .toFixed();
 
   useEffect(() => {
     console.log(cart);
     console.log(totalAmount);
     console.log(paymentMethod);
-  }, [cart,totalAmount]);
+  }, [cart, totalAmount]);
 
   return (
-    <CartContext.Provider value={{ cart, setCart, addToCart,removeFromCart,totalAmount,paymentMethod,setPaymentMethod }}>
+    <CartContext.Provider
+      value={{
+        cart,
+        setCart,
+        addToCart,
+        removeFromCart,
+        totalAmount,
+        paymentMethod,
+        setPaymentMethod,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );

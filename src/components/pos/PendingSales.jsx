@@ -14,7 +14,7 @@ export default function PendingSales() {
 
   const handleUpdate = async (saleId, newStatus) => {
     await updateSaleStatus(saleId, newStatus);
-    getSales({ page: 1, limit: 20, status: "pending" }); // refresca la lista
+    getSales({ page: 1, limit: 20, status: "pending", forceRefresh:true }); // refresca la lista
   };
 
   return (
