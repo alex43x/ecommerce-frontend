@@ -8,6 +8,7 @@ export const ReportProvider = ({ children }) => {
   const [category, setCategory] = useState(null);
   const [seller, setSeller] = useState(null);
   const [products, setProducts] = useState(null);
+  const [productsWeekly, setProductsWeekly] = useState(null);
   const [loading, setLoading] = useState(false);
   const [fetched, setFetched] = useState(false);
   const token = localStorage.getItem("AuthToken");
@@ -88,6 +89,16 @@ export const ReportProvider = ({ children }) => {
       force
     );
   };
+  const getSalesByProductsWeekly = async (params = {}, force = false) => {
+    console.log("aaaa", params);
+    const q = new URLSearchParams(params).toString();
+    fetchReport(
+      `/api/reports/products/weekly?${q}`,
+      setProductsWeekly,
+      `products-${q}`,
+      force
+    );
+  };
 
   const searchProductVariants = async (query) => {
     try {
@@ -105,6 +116,7 @@ export const ReportProvider = ({ children }) => {
       return [];
     }
   };
+
   return (
     <ReportContext.Provider
       value={{
@@ -114,7 +126,9 @@ export const ReportProvider = ({ children }) => {
         category,
         seller,
         products,
+        productsWeekly,
         setProducts,
+        setProductsWeekly,
         loading,
         searchProductVariants,
         getSummaryReport,
@@ -123,6 +137,7 @@ export const ReportProvider = ({ children }) => {
         getCategoryReport,
         getSellerReport,
         getSalesByProducts,
+        getSalesByProductsWeekly,
       }}
     >
       {children}

@@ -5,7 +5,7 @@ export default function ProductContainer({ product }) {
   const { cart, addToCart } = useCart();
 
   const getQuantity = (variantId) => {
-    const found = cart.find((item) => item.productId === variantId);
+    const found = cart.find((item) => item.variantId === variantId);
     return found ? found.quantity : 0;
   };
 

@@ -12,10 +12,17 @@ import {
   LineElement,
   PointElement,
 } from "chart.js";
-import { Bar, Pie } from "react-chartjs-2";
-import dayjs from "dayjs";
-import ProductVariantSelector from "../../components/dashboard/reports/ProductVariantSelector"; // asegúrate de tener este componente
 
+import dayjs from "dayjs";
+
+import ProductVariantSelector from "../../components/dashboard/reports/ProductVariantSelector";
+import WeeklyReport from "../../components/dashboard/reports/weeklyReport";
+import PaymentMethodReport from "../../components/dashboard/reports/PaymentMethodReport";
+import CategoryReport from "../../components/dashboard/reports/CategoryReport";
+import SellerReport from "../../components/dashboard/reports/SellerReport";
+import ProductReport from "../../components/dashboard/reports/ProductReport";
+
+import actualizar from "../../images/actualizar.png";
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -35,19 +42,20 @@ export default function Reports() {
     getCategoryReport,
     getSellerReport,
     getSalesByProducts,
+    getSalesByProductsWeekly,
     products,
     setProducts,
+    productsWeekly,
+    setProductsWeekly,
     daily,
     payment,
     category,
     seller,
   } = useReport();
 
+  const [productMode, setProductMode] = useState("Semanal");
   const [selectedVariants, setSelectedVariants] = useState([]);
 
-  useEffect(() => {
-    console.log(selectedVariants);
-  }, [selectedVariants]);
   const [dailyDateRange, setDailyDateRange] = useState({
     start: dayjs().subtract(6, "day").format("YYYY-MM-DD"),
     end: dayjs().format("YYYY-MM-DD"),
@@ -80,11 +88,11 @@ export default function Reports() {
     handleSellerRefresh();
   }, []);
 
+  // Fetch de ventas totales
   useEffect(() => {
     const fetchSalesData = async () => {
       if (selectedVariants.length > 0) {
         const productIds = selectedVariants.map((v) => v.variantId);
-        console.log(productIds);
         const data = await getSalesByProducts(
           {
             productIds,
@@ -100,9 +108,20 @@ export default function Reports() {
     };
     fetchSalesData();
   }, [selectedVariants, productDateRange.start, productDateRange.end]);
+
+  // Fetch de ventas semanales
   useEffect(() => {
-    console.log(products);
-  }, [products]);
+    const fetchWeeklySales = async () => {
+      if (selectedVariants.length > 0) {
+        const productIds = selectedVariants.map((v) => v.variantId);
+        const data = await getSalesByProductsWeekly({ productIds }, true);
+        setProductsWeekly(data);
+      } else {
+        setProductsWeekly([]);
+      }
+    };
+    fetchWeeklySales();
+  }, [selectedVariants]);
 
   const handleDailyRefresh = () => {
     getDailyReport({ startDate: dailyDateRange.start }, true);
@@ -138,212 +157,71 @@ export default function Reports() {
     );
   };
 
-  const handleProductRefresh = () => {
-    // simplemente vuelve a llamar al efecto
-    setSelectedVariants([...selectedVariants]);
-  };
-
-  const greenShades = [
-    "rgba(75, 192, 192, 0.6)",
-    "rgba(34, 139, 34, 0.6)",
-    "rgba(0, 128, 0, 0.6)",
-    "rgba(144, 238, 144, 0.6)",
-    "rgba(0, 100, 0, 0.6)",
-  ];
-
   return (
     <div>
-      <h2>Reportes</h2>
-
       {/* Ventas por día */}
-      <div>
-        <h3>Ventas por Día</h3>
-        <label>Inicio:</label>
-        <input
-          type="date"
-          value={dailyDateRange.start}
-          max={dailyDateRange.end}
-          onChange={(e) =>
-            setDailyDateRange({ ...dailyDateRange, start: e.target.value })
-          }
-        />
-        <label>Fin:</label>
-        <input
-          type="date"
-          min={dailyDateRange.start}
-          value={dailyDateRange.end}
-          onChange={(e) =>
-            setDailyDateRange({ ...dailyDateRange, end: e.target.value })
-          }
-        />
-        <button onClick={handleDailyRefresh}>Actualizar</button>
-        <Bar
-          data={{
-            labels: daily?.map((d) => d.date),
-            datasets: [
-              {
-                label: "Ventas",
-                data: daily?.map((d) => d.totalSales),
-                backgroundColor: greenShades,
-              },
-            ],
-          }}
-        />
-      </div>
+      <WeeklyReport
+        daily={daily}
+        dailyDateRange={dailyDateRange}
+        setDailyDateRange={setDailyDateRange}
+        handleDailyRefresh={handleDailyRefresh}
+      />
 
       {/* Método de pago */}
-      <div>
-        <h3>Ventas por Método de Pago</h3>
-        <label>Inicio:</label>
-        <input
-          type="date"
-          max={paymentDateRange.end}
-          value={paymentDateRange.start}
-          onChange={(e) =>
-            setPaymentDateRange({ ...paymentDateRange, start: e.target.value })
-          }
-        />
-        <label>Fin:</label>
-        <input
-          type="date"
-          min={paymentDateRange.start}
-          value={paymentDateRange.end}
-          onChange={(e) =>
-            setPaymentDateRange({ ...paymentDateRange, end: e.target.value })
-          }
-        />
-        <button onClick={handlePaymentRefresh}>Actualizar</button>
-        <Pie
-          data={{
-            labels: payment?.map((p) => p.paymentMethod),
-            datasets: [
-              {
-                label: "Método de Pago",
-                data: payment?.map((p) => p.totalSales),
-                backgroundColor: greenShades,
-              },
-            ],
-          }}
-        />
-      </div>
+      <PaymentMethodReport
+        payment={payment}
+        paymentDateRange={paymentDateRange}
+        setPaymentDateRange={setPaymentDateRange}
+        handlePaymentRefresh={handlePaymentRefresh}
+      />
 
       {/* Categorías */}
-      <div>
-        <h3>Ventas por Categoría</h3>
-        <label>Inicio:</label>
-        <input
-          type="date"
-          max={categoryDateRange.end}
-          value={categoryDateRange.start}
-          onChange={(e) =>
-            setCategoryDateRange({
-              ...categoryDateRange,
-              start: e.target.value,
-            })
-          }
-        />
-        <label>Fin:</label>
-        <input
-          type="date"
-          min={categoryDateRange.start}
-          value={categoryDateRange.end}
-          onChange={(e) =>
-            setCategoryDateRange({ ...categoryDateRange, end: e.target.value })
-          }
-        />
-        <button onClick={handleCategoryRefresh}>Actualizar</button>
-        <Pie
-          data={{
-            labels: category?.map((c) => c.category),
-            datasets: [
-              {
-                label: "Categoría",
-                data: category?.map((c) => c.totalSales),
-                backgroundColor: greenShades,
-              },
-            ],
-          }}
-        />
-      </div>
+      <CategoryReport
+        category={category}
+        categoryDateRange={categoryDateRange}
+        setCategoryDateRange={setCategoryDateRange}
+        handleCategoryRefresh={handleCategoryRefresh}
+      />
 
       {/* Vendedores */}
-      <div>
-        <h3>Ventas por Vendedor</h3>
-        <label>Inicio:</label>
-        <input
-          type="date"
-          value={sellerDateRange.start}
-          max={sellerDateRange.end}
-          onChange={(e) =>
-            setSellerDateRange({ ...sellerDateRange, start: e.target.value })
-          }
-        />
-        <label>Fin:</label>
-        <input
-          type="date"
-          value={sellerDateRange.end}
-          min={sellerDateRange.start}
-          onChange={(e) =>
-            setSellerDateRange({ ...sellerDateRange, end: e.target.value })
-          }
-        />
-        <button onClick={handleSellerRefresh}>Actualizar</button>
-        <Bar
-          data={{
-            labels: seller?.map((s) => s.sellerName),
-            datasets: [
-              {
-                label: "Vendedor",
-                data: seller?.map((s) => s.totalSales),
-                backgroundColor: greenShades,
-              },
-            ],
-          }}
-        />
-      </div>
+      <SellerReport
+        seller={seller}
+        sellerDateRange={sellerDateRange}
+        setSellerDateRange={setSellerDateRange}
+        handleSellerRefresh={handleSellerRefresh}
+      />
 
       {/* Productos seleccionados */}
-      <div>
-        <h3>Ventas por Productos Seleccionados</h3>
+      <div className="flex gap-2 my-2 items-center">
+        <h3 className="text-3xl text-green-800 font-semibold mb-2">
+          Productos - <span>{productMode}</span>
+        </h3>
+        <button
+          className="bg-green-200 rounded-lg border border-green-900 hover:bg-green-300"
+          onClick={() => {
+            if (productMode === "Semanal") {
+              setProductMode("Acumulado");
+            } else {
+              setProductMode("Semanal");
+            }
+          }}
+        >
+          <img className="w-4 object-contain" src={actualizar} alt="" />
+        </button>
+      </div>
+      
         <ProductVariantSelector
           selectedVariants={selectedVariants}
           setSelectedVariants={setSelectedVariants}
         />
-        <label>Inicio:</label>
-        <input
-          type="date"
-          max={productDateRange.end}
-          value={productDateRange.start}
-          onChange={(e) =>
-            setProductDateRange({ ...productDateRange, start: e.target.value })
-          }
-        />
-        <label>Fin:</label>
-        <input
-          type="date"
-          min={productDateRange.start}
-          value={productDateRange.end}
-          onChange={(e) =>
-            setProductDateRange({ ...productDateRange, end: e.target.value })
-          }
-        />
-        <button onClick={handleProductRefresh}>Actualizar</button>
-
-        {products?.length > 0 && (
-          <Bar
-            data={{
-              labels: products.map((p) => p.name),
-              datasets: [
-                {
-                  label: "Ventas",
-                  data: products.map((p) => p.totalRevenue),
-                  backgroundColor: greenShades,
-                },
-              ],
-            }}
-          />
-        )}
-      </div>
+      
+      <ProductReport
+        products={products}
+        productsWeekly={productsWeekly}
+        productDateRange={productDateRange}
+        setProductDateRange={setProductDateRange}
+        productMode={productMode}
+      ></ProductReport>
     </div>
   );
 }

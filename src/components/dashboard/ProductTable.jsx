@@ -15,13 +15,12 @@ export default function ProductTable({
   return (
     <table>
       <thead>
-        <tr>
+        <tr className="border-b-2 border-neutral-300">
           <th>Producto</th>
-          <th>Precio</th>
-          <th>Fecha</th>
-          <th>Categoría</th>
+          <th>Categorías</th>
           <th>Variantes</th>
           <th>URL</th>
+          <th>Fecha de Registro</th>
           <th>Opciones</th>
         </tr>
       </thead>

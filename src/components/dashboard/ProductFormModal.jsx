@@ -1,5 +1,4 @@
 import React from "react";
-
 import ReactDOM from "react-dom";
 
 export default function ProductFormModal({ isOpen, onClose, children }) {
@@ -18,18 +17,22 @@ export default function ProductFormModal({ isOpen, onClose, children }) {
         alignItems: "center",
         justifyContent: "center",
         zIndex: 1000,
+        padding: "1rem", // para que no quede pegado a los bordes
       }}
-      onClick={onClose} // Cierra si clickeas afuera
+      onClick={onClose}
     >
       <div
         style={{
-          background: "white",
+          background: "#edefee",
           padding: "20px",
           borderRadius: "10px",
           minWidth: "300px",
-          maxWidth: "90%",
+          
+          maxWidth: "800px",
+          maxHeight: "90vh", // limita altura del modal
+          overflowY: "auto", // permite scroll si es necesario
         }}
-        onClick={(e) => e.stopPropagation()} // Evita que se cierre al clickear adentro
+        onClick={(e) => e.stopPropagation()}
       >
         {children}
       </div>
@@ -37,4 +40,3 @@ export default function ProductFormModal({ isOpen, onClose, children }) {
     document.body
   );
 }
-

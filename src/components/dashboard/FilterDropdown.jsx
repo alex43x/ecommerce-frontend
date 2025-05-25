@@ -16,7 +16,7 @@ export default function Dropdown({ items, selected, onSelect, placeholder = "Sel
 
   return (
     <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
-      <button onClick={() => setOpen(!open)}>
+      <button style={{border: "1px solid #e0e0e0"}} className="bg-white px-1 py-1 " onClick={() => setOpen(!open)}>
         {selected?.label || placeholder} ⌄
       </button>
 
@@ -27,7 +27,7 @@ export default function Dropdown({ items, selected, onSelect, placeholder = "Sel
             top: "100%",
             left: 0,
             background: "#fff",
-            border: "1px solid #ccc",
+            border: "1px solid #e0e0e0",
             listStyle: "none",
             padding: 0,
             margin: 0,

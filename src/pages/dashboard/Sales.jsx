@@ -2,33 +2,64 @@ import React, { useEffect, useState } from "react";
 import { useSale } from "../../context/sale/SaleContext";
 import { useUser } from "../../context/user/UserContext";
 import RecentSales from "../../components/dashboard/sales/SalesTable";
+import cancelado from "../../images/eliminar.png";
+import listo from "../../images/listo.png";
+import todo from "../../images/todo.png";
+import pendiente from "../../images/pendiente.png";
+import Dropdown from "../../components/dashboard/FilterDropdown";
 
 export default function Sales() {
   const { getSales, sales, loading, page, totalPages } = useSale();
   const { users, getUsers } = useUser();
 
   const [status, setStatus] = useState("all");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
   const [user, setUser] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [ruc, setRuc] = useState("");
   const [product, setProduct] = useState("");
   const [debouncedProduct, setDebouncedProduct] = useState("");
+  const [debouncedRUC, setDebouncedRUC] = useState("");
+
+  const startDefault = new Date();
+  startDefault.setDate(startDefault.getDate() - 7);
+  const endDefault = new Date(Date.now());
+  endDefault.setDate(endDefault.getDate());
+  const formatDate = (date) => date.toISOString().split("T")[0];
+  const [startDate, setStartDate] = useState(formatDate(startDefault));
+  const [endDate, setEndDate] = useState(formatDate(endDefault));
+
+  const paymentOptions = [
+    { label: "Todos", value: "" },
+    { label: "Efectivo", value: "cash" },
+    { label: "Tarjeta", value: "card" },
+    { label: "QR", value: "qr" },
+  ];
+const userOptions = [
+  { label: "Todos", value: "" },
+  ...users.map((user) => ({
+    label: user.name,
+    value: user.name,
+  })),
+];
+
 
   useEffect(() => {
     getUsers();
   }, []);
 
-  // Debouncing para el input de producto
   useEffect(() => {
     const timeout = setTimeout(() => {
       setDebouncedProduct(product);
     }, 500);
     return () => clearTimeout(timeout);
   }, [product]);
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setDebouncedRUC(ruc);
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [ruc]);
 
-  // Llama al backend cuando cambian los filtros
   useEffect(() => {
     getSales({
       page,
@@ -38,7 +69,7 @@ export default function Sales() {
       endDate: endDate || null,
       user: user || null,
       paymentMethod: paymentMethod || null,
-      ruc: ruc || null,
+      ruc: debouncedRUC || null,
       product: debouncedProduct || null,
       forceRefresh: true,
     });
@@ -48,7 +79,7 @@ export default function Sales() {
     endDate,
     user,
     paymentMethod,
-    ruc,
+    debouncedRUC,
     debouncedProduct,
     page,
   ]);
@@ -69,78 +100,102 @@ export default function Sales() {
     });
   };
 
+  const tabClasses = (tab) =>
+    `px-4 py-2 rounded-md text-sm transition-colors flex items-center justify-center gap-1 ${
+      status === tab
+        ? "bg-green-700 text-white"
+        : "bg-gray-200 hover:bg-gray-300 border border-green-700 text-green-800"
+    }`;
+
+  const statusMap = {
+    all: { label: "Todos", icon: todo },
+    completed: { label: "Completado", icon: listo },
+    pending: { label: "Pendiente", icon: pendiente },
+    canceled: { label: "Cancelado", icon: cancelado },
+  };
+
   return (
     <div>
       {/* Filtros por estado */}
-      <section className="flex gap-2 mb-4">
-        {["all", "completed", "pending", "canceled"].map((s) => (
-          <button key={s} onClick={() => setStatus(s)}>
-            {s === "all" ? "Todos" : s.charAt(0).toUpperCase() + s.slice(1)}
+      <section className="flex gap-2 mb-4 ">
+        {Object.entries(statusMap).map(([key, { label, icon }]) => (
+          <button
+            className={tabClasses(key)}
+            key={key}
+            onClick={() => setStatus(key)}
+          >
+            {status !== key && (
+              <img src={icon} alt={label} className="w-4 h-4" />
+            )}
+            {label}
           </button>
         ))}
       </section>
 
       {/* Filtros adicionales */}
-      <section className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
+      <section className="flex flex-wrap gap-1 font-medium my-2">
         <div>
-          <label>Desde:</label>
+          <label>RUC: </label>
+          <input
+            type="text"
+            value={ruc}
+            className="border px-2 py-1 rounded-lg"
+            placeholder="RUC del cliente"
+            onChange={(e) => setRuc(e.target.value)}
+          />
+        </div>
+        <div className="ml-2">
+          <label>Producto: </label>
+          <input
+            type="text"
+            value={product}
+            placeholder="Nombre del Producto"
+            className="border px-2 py-1 rounded-lg"
+            onChange={(e) => setProduct(e.target.value)}
+          />
+        </div>
+        <div className="ml-2">
+          <label >Vendedor: </label>
+          <Dropdown
+            items={userOptions}
+            selected={userOptions.find((opt) => opt.value === user)}
+            onSelect={(option) => setUser(option.value)}
+            placeholder="Por Vendedor"
+          />
+        </div>
+        <div className="ml-2">
+          <label >Método de Pago: </label>
+          <Dropdown
+            items={paymentOptions}
+            selected={paymentOptions.find((opt) => opt.value === paymentMethod)}
+            onSelect={(option) => setPaymentMethod(option.value)}
+            placeholder="Por Método de Pago"
+          />
+        </div>
+      </section>
+      <section className="flex flex-wrap gap-1 font-medium">
+        <div>
+          <label>Desde: </label>
           <input
             type="date"
+            className="px-2 py-1"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
           />
         </div>
         <div>
-          <label>Hasta:</label>
+          <label>Hasta: </label>
           <input
             type="date"
+            className="px-2 py-1"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-          />
-        </div>
-        <div>
-          <label>Usuario:</label>
-          <select value={user} onChange={(e) => setUser(e.target.value)}>
-            <option value="">Todos</option>
-            {users.map((u) => (
-              <option key={u._id} value={u._id}>
-                {u.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label>Método de pago:</label>
-          <select
-            value={paymentMethod}
-            onChange={(e) => setPaymentMethod(e.target.value)}
-          >
-            <option value="">Todos</option>
-            <option value="card">Tarjeta</option>
-            <option value="qr">QR</option>
-            <option value="cash">Efectivo</option>
-          </select>
-        </div>
-        <div>
-          <label>RUC:</label>
-          <input
-            type="text"
-            value={ruc}
-            onChange={(e) => setRuc(e.target.value)}
-          />
-        </div>
-        <div>
-          <label>Producto:</label>
-          <input
-            type="text"
-            value={product}
-            onChange={(e) => setProduct(e.target.value)}
           />
         </div>
       </section>
 
       {/* Tabla de ventas */}
-      <section>
+      <section className="mt-4">
         {loading ? <p>Cargando...</p> : <RecentSales sales={sales} />}
       </section>
 

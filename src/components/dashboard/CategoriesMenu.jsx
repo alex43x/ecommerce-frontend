@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useProduct } from "../../context/product/ProductContext";
+import eliminar from "../../images/eliminar.png";
+import guardar from "../../images/guardar.png";
+import editar from "../../images/editar.png";
 
 export default function CategoriesMenu({ onExit = () => {} }) {
   const {
@@ -40,7 +43,7 @@ export default function CategoriesMenu({ onExit = () => {} }) {
   const handleDelete = async (id) => {
     try {
       await deleteCategory(id);
-      await getProducts({ page: 1, limit: 10, forceRefresh: true });
+      await getProducts({ page: 1, limit: 10,forceRefresh: true });
       await getCategories(true);
     } catch (e) {
       console.error("Error al eliminar categoría:", e);
@@ -84,79 +87,116 @@ export default function CategoriesMenu({ onExit = () => {} }) {
     <div>
       {open && (
         <div>
+          <div className="flex justify-between items-start">
+            <h1 className="text-green-800 mb-4">Categorías</h1>
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                onExit(false);
+              }}
+            >
+              <img className="w-6 h-6 object-contain" src={eliminar} alt="" />
+            </button>
+          </div>
+
           <ul>
             {categories.map((category) => (
               <li key={category._id}>
                 {editing && editForm._id === category._id ? (
-                  <div>
+                  <div className="flex justify-between gap-3 border-b border-neutral-300 pb-2">
                     <input
                       type="text"
                       value={editForm.name}
+                      className="px-2 "
                       onChange={(e) => handleChange(e.target.value)}
                       style={{
                         backgroundColor: errors.edit ? "#ffe5e5" : "white",
-                        border: errors.edit ? "1px solid red" : "1px solid #ccc",
+                        border: errors.edit
+                          ? "1px solid red"
+                          : "1px solid #ccc",
                       }}
                     />
                     {errors.edit && (
                       <span style={{ color: "red" }}>{errors.edit}</span>
                     )}
-                    <button type="button" onClick={handleSave}>
-                      ✅
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditing(false);
-                        setEditForm({ _id: "", name: "" });
-                        setErrors({ ...errors, edit: "" });
-                      }}
-                    >
-                      ❎
-                    </button>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        className="bg-green-200 rounded px-1 py-1"
+                        onClick={handleSave}
+                      >
+                        <img
+                          className="w-4 h-4 object-contain"
+                          src={guardar}
+                          alt=""
+                        />
+                      </button>
+                      <button
+                        className="bg-green-200 rounded px-1 py-1"
+                        type="button"
+                        onClick={() => {
+                          setEditing(false);
+                          setEditForm({ _id: "", name: "" });
+                          setErrors({ ...errors, edit: "" });
+                        }}
+                      >
+                        <img
+                          className="w-4 h-4 object-contain"
+                          src={eliminar}
+                          alt=""
+                        />
+                      </button>
+                    </div>
                   </div>
                 ) : (
-                  <div>
-                    <p>{category.name}</p>
-                    <button
-                      type="button"
-                      onClick={() => activateEditing(category)}
-                    >
-                      🖋️
-                    </button>
+                  <div className="flex justify-between gap-2 border-b border-neutral-300 my-2 pb-2 ">
+                    <p className="font-medium">{category.name}</p>
+                    <section className="flex justify-end gap-1 ">
+                      <button
+                        type="button"
+                        className="bg-green-200 text-green-950 text-xs rounded px-1 py-1 "
+                        onClick={() => activateEditing(category)}
+                      >
+                        <img
+                          className="w-4 h-4 object-contain"
+                          src={editar}
+                          alt=""
+                        />
+                      </button>
+                      <button
+                        type="button"
+                        className="bg-green-200 text-green-950 text-xs rounded px-1 py-1 "
+                        onClick={() => handleDelete(category._id)}
+                      >
+                        <span></span>
+                        <img
+                          className="w-4 h-4 object-contain"
+                          src={eliminar}
+                          alt=""
+                        />
+                      </button>
+                    </section>
                   </div>
                 )}
-                <button
-                  type="button"
-                  onClick={() => handleDelete(category._id)}
-                >
-                  🚮
-                </button>
               </li>
             ))}
           </ul>
 
-          <button
-            type="button"
-            disabled={adding}
-            onClick={() => {
-              setAdding(true);
-              setErrors({ ...errors, add: "" });
-            }}
-          >
-            Añadir ➕
-          </button>
-
           {adding && (
-            <div>
+            <div className="flex justify-between">
               <input
                 type="text"
                 name="name"
+                className="pl-2"
                 value={addForm.name}
                 onChange={(e) => {
                   setAddForm({ name: e.target.value });
                   if (!e.target.value.trim()) {
-                    setErrors({ ...errors, add: "El nombre no puede estar vacío." });
+                    setErrors({
+                      ...errors,
+                      add: "El nombre no puede estar vacío.",
+                    });
                   } else {
                     setErrors({ ...errors, add: "" });
                   }
@@ -166,35 +206,47 @@ export default function CategoriesMenu({ onExit = () => {} }) {
                   border: errors.add ? "1px solid red" : "1px solid #ccc",
                 }}
               />
-              {errors.add && (
-                <span style={{ color: "red" }}>{errors.add}</span>
-              )}
-              <button type="button" onClick={handleNew}>
-                ✅
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setAdding(false);
-                  setAddForm({ name: "" });
-                  setErrors({ ...errors, add: "" });
-                }}
-              >
-                ❎
-              </button>
+              <div className="flex gap-1">
+                <button className="bg-green-200 text-green-950 text-xs rounded px-1 py-1" type="button" onClick={handleNew}>
+                  <img
+                    className="w-4 h-4 object-contain"
+                    src={guardar}
+                    alt=""
+                  />
+                </button>
+                <button
+                  type="button"
+                  className="bg-green-200 text-green-950 text-xs rounded px-1 py-1"
+                  onClick={() => {
+                    setAdding(false);
+                    setAddForm({ name: "" });
+                    setErrors({ ...errors, add: "" });
+                  }}
+                >
+                  <img
+                    className="w-4 h-4 object-contain"
+                    src={eliminar}
+                    alt=""
+                  />
+                </button>
+              </div>
+
             </div>
           )}
+          {errors.add && <p style={{ color: "red" }}>{errors.add}</p>}
+          <button
+            type="button"
+            disabled={adding}
+            className="bg-green-200 text-green-950 text-xs rounded px-1 py-1 w-full my-2"
+            onClick={() => {
+              setAdding(true);
+              setErrors({ ...errors, add: "" });
+            }}
+          >
+            Añadir Categoría
+          </button>
         </div>
       )}
-      <button
-        type="button"
-        onClick={() => {
-          setOpen(false);
-          onExit(false);
-        }}
-      >
-        ❎
-      </button>
     </div>
   );
 }

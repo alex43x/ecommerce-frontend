@@ -1,65 +1,108 @@
-// ProductVariantSelector.jsx
-import React, { useState, useEffect } from 'react';
-import useDebounce from './useDebounce'; // Asegúrate de tener este hook implementado
-import { useReport } from '../../../context/report/ReportContext';
+import React, { useState, useEffect, useRef } from "react";
+import useDebounce from "./useDebounce";
+import { useReport } from "../../../context/report/ReportContext";
+import eliminar from "../../../images/eliminar.png";
 
-export default function ProductVariantSelector({ selectedVariants, setSelectedVariants }) {
-  const [searchTerm, setSearchTerm] = useState('');
+export default function ProductVariantSelector({
+  selectedVariants,
+  setSelectedVariants,
+}) {
+  const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [suggestions, setSuggestions] = useState([]);
   const { searchProductVariants } = useReport();
+  const containerRef = useRef();
 
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (debouncedSearchTerm) {
         const results = await searchProductVariants(debouncedSearchTerm);
-        setSuggestions(results);
+        // filtrar los que ya están seleccionados
+        const filtered = results.filter(
+          (variant) =>
+            !selectedVariants.some((v) => v.variantId === variant.variantId)
+        );
+        setSuggestions(filtered);
       } else {
         setSuggestions([]);
       }
     };
     fetchSuggestions();
-  }, [debouncedSearchTerm, searchProductVariants]);
+  }, [debouncedSearchTerm, searchProductVariants, selectedVariants]);
 
   const handleSelect = (variant) => {
-    if (!selectedVariants.find((v) => v.variantId === variant.variantId) && selectedVariants.length < 5) {
+    if (
+      !selectedVariants.find((v) => v.variantId === variant.variantId) &&
+      selectedVariants.length < 5
+    ) {
       setSelectedVariants([...selectedVariants, variant]);
     }
-    setSearchTerm('');
+    setSearchTerm("");
     setSuggestions([]);
-    
   };
 
-  useEffect(()=>{
-    console.log(selectedVariants)
-  },[selectedVariants])
   const handleRemove = (variantId) => {
-    setSelectedVariants(selectedVariants.filter((v) => v.variantId !== variantId));
+    setSelectedVariants(
+      selectedVariants.filter((v) => v.variantId !== variantId)
+    );
   };
+
+  // Cierra el dropdown si se hace clic fuera del componente
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target)
+      ) {
+        setSuggestions([]);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
     <div>
-      <input
-        type="text"
-        placeholder="Buscar variantes vendidas..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
-      {suggestions.length > 0 && (
-        <ul>
-          {suggestions.map((variant) => (
-            <li key={variant.variantId} onClick={() => handleSelect(variant)}>
-              {variant.name}
-            </li>
-          ))}
-        </ul>
-      )}
-      <div>
+      <div ref={containerRef} className="relative w-full max-w-md">
+        <input
+          type="text"
+          className="w-8/12 px-3 py-2 border border-gray-300 rounded-md"
+          placeholder="Buscar Producto"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        {suggestions.length > 0 && (
+          <ul className="absolute z-10 mt-1 w-8/12 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-auto">
+            {suggestions.map((variant) => (
+              <li
+                key={variant.variantId}
+                onClick={() => handleSelect(variant)}
+                className="px-3 py-2 hover:bg-green-200 cursor-pointer"
+              >
+                {variant.name}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="flex flex-wrap gap-2 mt-3 ">
         {selectedVariants.map((variant) => (
-          <span key={variant.variantId}>
-            {variant.name}
-            <button onClick={() => handleRemove(variant.variantId)}>Eliminar</button>
-          </span>
+          <div
+            key={variant.variantId}
+            className="flex items-center px-2 py-1 bg-green-200 border border-green-900 rounded-lg hover:bg-green-300"
+          >
+            <span className="mr-2 font-medium">{variant.name}</span>
+            <button onClick={() => handleRemove(variant.variantId)}>
+              <img
+                className="w-4 h-4 object-contain"
+                src={eliminar}
+                alt="Eliminar"
+              />
+            </button>
+          </div>
         ))}
       </div>
     </div>

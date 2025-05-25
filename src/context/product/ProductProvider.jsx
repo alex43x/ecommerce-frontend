@@ -14,19 +14,20 @@ export const ProductProvider = ({ children }) => {
   const getProducts = async ({
     page = 1,
     limit = 10,
-    category = "general",
+    category = "",
     search = null,
-    sortBy = null,
+    sortBy = "dateDesc",
     forceRefresh = false,
   }) => {
     const currentParams = { page, limit, category, search, sortBy };
-
+    console.log(currentParams);
     if (
       !forceRefresh &&
       lastFetchParams[category] &&
       JSON.stringify(currentParams) ===
         JSON.stringify(lastFetchParams[category])
     ) {
+      console.log("a", forceRefresh);
       return {
         products: productsByCategory[category] || [],
         totalPages,
@@ -150,8 +151,44 @@ export const ProductProvider = ({ children }) => {
         },
         body: JSON.stringify(product),
       });
+
       const data = await res.json();
-      console.log(data);
+      console.log("Producto creado:", data);
+
+      const categoriesToUpdate =
+        product.category.length > 0 ? product.category : [""];
+
+      for (const cat of categoriesToUpdate) {
+        setLastFetchParams((prev) => ({
+          ...prev,
+          [cat]: {},
+        }));
+
+        const { products } = await getProducts({
+          page: 1,
+          limit: 10,
+          category: cat,
+          forceRefresh: true,
+        });
+
+        setProductsByCategory((prev) => ({
+          ...prev,
+          [cat]: products,
+        }));
+      }
+
+      // También actualizar la vista general sin categoría
+      const generalProducts = await getProducts({
+        page: 1,
+        limit: 10,
+        category: "",
+        forceRefresh: true,
+      });
+
+      setProductsByCategory((prev) => ({
+        ...prev,
+        [""]: generalProducts.products,
+      }));
     } catch (e) {
       console.error(e);
       throw e;

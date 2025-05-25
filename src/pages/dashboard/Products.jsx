@@ -15,10 +15,20 @@ export default function Products() {
     categories,
     loading,
     getCategories,
+    productsByCategory,
   } = useProduct();
-
-  const [products, setProducts] = useState([]);
+  const [filters, setFilters] = useState({
+    page: 1,
+    search: "",
+    sortBy: "dateDesc",
+    category: "",
+  });
   const [totalPages, setTotalPages] = useState(1);
+  useEffect(() => {
+    getProducts({ ...filters, limit: 15 }).then((res) => {
+      setTotalPages(res.totalPages || 1);
+    });
+  }, [filters]);
 
   const [editProductId, setEditProductId] = useState(null);
   const [editForm, setEditForm] = useState({});
@@ -26,13 +36,14 @@ export default function Products() {
   const [addCategory, setAddCategory] = useState(false);
   const [searchInput, setSearchInput] = useState("");
 
+  const currentProducts = productsByCategory[filters.category] || [];
   const sortOptions = [
-    { label: "Fecha ↓", value: "dateDesc" },
-    { label: "Fecha ↑", value: "dateAsc" },
-    { label: "Precio ↓", value: "priceDesc" },
-    { label: "Precio ↑", value: "priceAsc" },
-    { label: "Nombre A-Z", value: "nameAsc" },
-    { label: "Nombre Z-A", value: "nameDesc" },
+    { label: "Más Reciente", value: "dateDesc" },
+    { label: "Más Antiguo", value: "dateAsc" },
+    { label: "Mayor Precio", value: "priceDesc" },
+    { label: "Menor Precio ", value: "priceAsc" },
+    { label: "A-Z", value: "nameAsc" },
+    { label: "Z-A", value: "nameDesc" },
   ];
 
   const categoryOptions = [
@@ -43,22 +54,12 @@ export default function Products() {
     })),
   ];
 
-  const [filters, setFilters] = useState({
-    page: 1,
-    search: "",
-    sortBy: "dateDesc",
-    category: "",
-  });
-
   useEffect(() => {
     getCategories();
   }, []);
 
   useEffect(() => {
-    getProducts({ ...filters, limit: 15 }).then((res) => {
-      setProducts(res.products || []);
-      setTotalPages(res.totalPages || 1);
-    });
+    getProducts({ ...filters, limit: 15 });
   }, [filters]);
 
   useEffect(() => {
@@ -72,42 +73,69 @@ export default function Products() {
 
   return (
     <div>
-      <button onClick={() => setAddProduct(true)}>Agregar producto</button>
-      <ProductFormModal isOpen={addProduct} onClose={() => setAddProduct(false)}>
-        <NewProductForm onExit={() => setAddProduct(false)} />
-      </ProductFormModal>
+      {/* Filtros junto a los tabs */}
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        {/* Aquí ya no necesitas los botones de tab */}
 
-      <button onClick={() => setAddCategory(true)}>Categorías...</button>
-      <ProductFormModal isOpen={addCategory} onClose={() => setAddCategory(false)}>
-        <CategoriesMenu onExit={() => setAddCategory(false)} />
-      </ProductFormModal>
+        <input
+          type="text"
+          className="border px-2 py-1 rounded-lg"
+          placeholder="Buscar producto..."
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+        />
 
-      <input
-        type="text"
-        value={searchInput}
-        onChange={(e) => setSearchInput(e.target.value)}
-      />
+        <Dropdown
+          items={categoryOptions}
+          selected={categoryOptions.find(
+            (opt) => opt.value === filters.category
+          )}
+          onSelect={(option) =>
+            setFilters((f) => ({ ...f, category: option.value, page: 1 }))
+          }
+          placeholder="Por categoría"
+        />
 
-      <Dropdown
-        items={categoryOptions}
-        selected={categoryOptions.find((opt) => opt.value === filters.category)}
-        onSelect={(option) =>
-          setFilters((f) => ({ ...f, category: option.value, page: 1 }))
-        }
-        placeholder="Por categoría"
-      />
+        <Dropdown
+          items={sortOptions}
+          selected={sortOptions.find((opt) => opt.value === filters.sortBy)}
+          onSelect={(option) =>
+            setFilters((f) => ({ ...f, sortBy: option.value, page: 1 }))
+          }
+          placeholder="Ordenar por"
+        />
 
-      <Dropdown
-        items={sortOptions}
-        selected={sortOptions.find((opt) => opt.value === filters.sortBy)}
-        onSelect={(option) =>
-          setFilters((f) => ({ ...f, sortBy: option.value, page: 1 }))
-        }
-        placeholder="Ordenar por"
-      />
+        <button
+          style={{ border: "1px solid #e0e0e0" }}
+          className="bg-white px-2 py-1"
+          onClick={() => setAddProduct(true)}
+        >
+          Agregar Producto
+        </button>
+        <ProductFormModal
+          isOpen={addProduct}
+          onClose={() => setAddProduct(false)}
+        >
+          <NewProductForm onExit={() => setAddProduct(false)} />
+        </ProductFormModal>
+
+        <button
+          style={{ border: "1px solid #e0e0e0" }}
+          className="bg-white px-2 py-1"
+          onClick={() => setAddCategory(true)}
+        >
+          Categorías
+        </button>
+        <ProductFormModal
+          isOpen={addCategory}
+          onClose={() => setAddCategory(false)}
+        >
+          <CategoriesMenu onExit={() => setAddCategory(false)} />
+        </ProductFormModal>
+      </div>
 
       <ProductTable
-        products={products}
+        products={currentProducts}
         loading={loading}
         categories={categories}
         editProductId={editProductId}
@@ -117,10 +145,7 @@ export default function Products() {
         updateProduct={updateProduct}
         deleteProduct={deleteProduct}
         refreshProducts={() =>
-          getProducts({ ...filters, limit: 15, forceRefresh: true }).then((res) => {
-            setProducts(res.products || []);
-            setTotalPages(res.totalPages || 1);
-          })
+          getProducts({ ...filters, limit: 15, forceRefresh: true })
         }
       />
 

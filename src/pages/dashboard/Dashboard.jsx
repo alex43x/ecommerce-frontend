@@ -1,23 +1,23 @@
 import React from "react";
 import { useAuth } from "../../context/auth/AuthContext";
 import DashboardTabs from "../../components/dashboard/DashboardTabs";
-import { useNavigate } from "react-router-dom";
+
 export default function Dashboard() {
-  const { logout, user } = useAuth();
-  const nav=useNavigate();
+  const { user } = useAuth();
+
+  const fechaFormateada = new Date().toLocaleDateString("es-ES", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+
   return (
     <div>
-      <h1>Dashboard</h1>
-      <p>Hola, {user.name}</p>
-      <button
-        onClick={() => {
-          logout();
-        }}
-      >
-        Cerrar Sesión
-      </button>
-      <button onClick={()=>{nav("/config")}}>Config</button>
-      <DashboardTabs/>
+      <h1 className="text-green-800 inline">Dashboard</h1>
+      <p className=" font-medium my-4 inline ml-6">{fechaFormateada}</p>
+      <p className=" font-medium text-xl my-2">Hola, {user.name}</p>
+      <DashboardTabs />
     </div>
   );
 }

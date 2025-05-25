@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-
+import eliminar from "../../images/eliminar.png";
+import anadir from "../../images/anadir.png";
 export default function VariantsTable({ variants, onEdit, editing = false }) {
   const [editData, setEditData] = useState([]);
   const [error, setError] = useState("");
@@ -12,7 +13,6 @@ export default function VariantsTable({ variants, onEdit, editing = false }) {
     const updatedVariants = [...editData];
     updatedVariants[index] = { ...updatedVariants[index], [field]: value };
 
-    // Validar aquí
     if (field === "price" && value <= 0) {
       setError("El precio debe ser mayor que 0.");
     } else if (
@@ -35,7 +35,7 @@ export default function VariantsTable({ variants, onEdit, editing = false }) {
     ];
     setEditData(updated);
     onEdit(updated);
-    setError(""); // Limpiar error al agregar
+    setError("");
   };
 
   const removeVariant = (index) => {
@@ -45,88 +45,105 @@ export default function VariantsTable({ variants, onEdit, editing = false }) {
   };
 
   return (
-    <div style={{ marginTop: "10px" }}>
-      <table>
-        <thead>
+    <div className="mb-2 overflow-x-auto">
+      <table className="min-w-[210px] text-sm border border-gray-200 table-fixed">
+        <thead className="bg-gray-100">
           <tr>
-            <th>Código de Barras</th>
-            <th>Abreviación</th>
-            <th>Nombre</th>
-            <th>Precio</th>
-            {editing && <th>Eliminar</th>}
+            <th className="w-[60px] px-1 text-left">Código</th>
+            <th className="w-[30px] px-1 text-left">Abrev.</th>
+            <th className="w-[60px] px-1 text-left">Nombre</th>
+            <th className="w-[60px] px-1 -left">Precio</th>
+            {editing && <th className="w-[50px] p-1 text-center">🗑️</th>}
           </tr>
         </thead>
         <tbody>
           {editData.map((variant, index) => (
-            <tr key={index}>
-              <td>
+            <tr key={index} className="border-t border-gray-100">
+              <td className="w-[60px] p-1">
                 {editing ? (
                   <input
                     type="text"
-                    autoFocus
+                    className="p-1 border rounded w-full text-sm"
                     value={variant.barcode || ""}
                     onChange={(e) =>
                       handleChange(index, "barcode", e.target.value)
                     }
                   />
                 ) : (
-                  variant.barcode
+                  <span className="text-sm">{variant.barcode}</span>
                 )}
               </td>
-              <td>
+              <td className="w-[30px] p-1">
                 {editing ? (
                   <input
                     type="text"
+                    className="p-1 border rounded w-full text-sm"
                     value={variant.abreviation || ""}
                     onChange={(e) =>
                       handleChange(index, "abreviation", e.target.value)
                     }
                   />
                 ) : (
-                  variant.abreviation
+                  <div className="  px-1 rounded-md bg-green-200">
+                    <p className="text-sm text-center text-green-950 font-medium">
+                      {variant.abreviation}
+                    </p>
+                  </div>
                 )}
               </td>
-              <td>
+              <td className="w-[130px] p-1">
                 {editing ? (
                   <input
                     type="text"
+                    className="p-1 border rounded w-full text-sm"
                     value={variant.variantName || ""}
                     onChange={(e) =>
                       handleChange(index, "variantName", e.target.value)
                     }
                   />
                 ) : (
-                  variant.variantName
+                  <span className="text-sm">{variant.variantName}</span>
                 )}
               </td>
-
-              <td>
+              <td className="w-[90px] p-1">
                 {editing ? (
                   <input
                     type="number"
+                    className="p-1 border rounded w-full text-sm"
                     value={variant.price || ""}
                     onChange={(e) =>
-                      handleChange(index, "price", e.target.value)
+                      handleChange(index, "price", Number(e.target.value))
                     }
                   />
                 ) : (
-                  `₲${variant.price}`
+                  <span className="text-sm">₲{variant.price}</span>
                 )}
               </td>
               {editing && (
-                <td>
-                  <button onClick={() => removeVariant(index)}>🗑️</button>
+                <td className="w-[75px] p-1 text-center">
+                  <button
+                    className="text-red-500 hover:text-red-700 text-sm"
+                    onClick={() => removeVariant(index)}
+                    title="Eliminar"
+                  >
+                    <img className="w-10 object-contain" src={eliminar} alt="" />
+                  </button>
                 </td>
               )}
             </tr>
           ))}
         </tbody>
       </table>
-      {error && <div style={{ color: "red", marginTop: "10px" }}>{error}</div>}
+
+      {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
 
       {editing && (
-        <button style={{ marginTop: "10px" }} onClick={addVariant}>
-          ➕ Agregar Variante
+        <button
+          onClick={addVariant}
+          className="bg-green-200 text-green-950 text-xs rounded px-2 py-2 flex items-center  justify-center gap-1 w-full"
+        >
+          <span>Agregar Variante</span>
+          <img className="w-5 h-5 object-contain" src={anadir} alt="" />
         </button>
       )}
     </div>
