@@ -9,7 +9,8 @@ import pendiente from "../../images/pendiente.png";
 import Dropdown from "../../components/dashboard/products/FilterDropdown";
 
 export default function Sales() {
-  const { getSales, sales, loading, page, totalPages } = useSale();
+  const { getSales, sales, loading, page, totalPages, updateSaleStatus } =
+    useSale();
   const { users, getUsers } = useUser();
 
   const [status, setStatus] = useState("all");
@@ -34,14 +35,13 @@ export default function Sales() {
     { label: "Tarjeta", value: "card" },
     { label: "QR", value: "qr" },
   ];
-const userOptions = [
-  { label: "Todos", value: "" },
-  ...users.map((user) => ({
-    label: user.name,
-    value: user.name,
-  })),
-];
-
+  const userOptions = [
+    { label: "Todos", value: "" },
+    ...users.map((user) => ({
+      label: user.name,
+      value: user.name,
+    })),
+  ];
 
   useEffect(() => {
     getUsers();
@@ -63,7 +63,7 @@ const userOptions = [
   useEffect(() => {
     getSales({
       page,
-      limit: 10,
+      limit: 15,
       status,
       startDate: startDate || null,
       endDate: endDate || null,
@@ -155,7 +155,7 @@ const userOptions = [
           />
         </div>
         <div className="ml-2">
-          <label >Vendedor: </label>
+          <label>Vendedor: </label>
           <Dropdown
             items={userOptions}
             selected={userOptions.find((opt) => opt.value === user)}
@@ -164,7 +164,7 @@ const userOptions = [
           />
         </div>
         <div className="ml-2">
-          <label >Método de Pago: </label>
+          <label>Método de Pago: </label>
           <Dropdown
             items={paymentOptions}
             selected={paymentOptions.find((opt) => opt.value === paymentMethod)}
@@ -196,7 +196,28 @@ const userOptions = [
 
       {/* Tabla de ventas */}
       <section className="mt-4">
-        {loading ? <p>Cargando...</p> : <RecentSales sales={sales} />}
+        {loading ? (
+          <p>Cargando...</p>
+        ) : (
+          <RecentSales
+            sales={sales}
+            onCancel={(saleId) => {
+              updateSaleStatus(saleId, "canceled");
+              getSales({
+                page,
+                limit: 15,
+                status,
+                startDate: startDate || null,
+                endDate: endDate || null,
+                user: user || null,
+                paymentMethod: paymentMethod || null,
+                ruc: debouncedRUC || null,
+                product: debouncedProduct || null,
+                forceRefresh: true,
+              });
+            }}
+          />
+        )}
       </section>
 
       {/* Paginación */}

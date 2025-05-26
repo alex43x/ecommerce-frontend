@@ -1,10 +1,7 @@
 import React from "react";
 import Swal from "sweetalert2";
-import { useSale } from "../../../context/sale/SaleContext";
 
-export default function RecentSales({ sales = [] }) {
-  const { updateSaleStatus, getSales } = useSale();
-
+export default function RecentSales({ sales = [], onCancel }) {
   const handleCancel = async (saleId) => {
     const result = await Swal.fire({
       title: "¿Estás seguro?",
@@ -17,9 +14,7 @@ export default function RecentSales({ sales = [] }) {
     });
 
     if (!result.isConfirmed) return;
-
-    updateSaleStatus(saleId, "canceled");
-    getSales({ page: 1, limit: 20, forceRefresh: true, status: "all" });
+    onCancel(saleId);
 
     Swal.fire("Anulada", "La venta fue anulada correctamente.", "success");
   };
@@ -35,8 +30,16 @@ export default function RecentSales({ sales = [] }) {
   };
 
   const statusLabels = {
-    completed: { label: "Completado", bg: "bg-green-200", text: "text-green-800" },
-    pending: { label: "Pendiente", bg: "bg-yellow-200", text: "text-yellow-800" },
+    completed: {
+      label: "Completado",
+      bg: "bg-green-200",
+      text: "text-green-800",
+    },
+    pending: {
+      label: "Pendiente",
+      bg: "bg-yellow-200",
+      text: "text-yellow-800",
+    },
     canceled: { label: "Cancelado", bg: "bg-red-200", text: "text-red-800" },
   };
 
@@ -44,7 +47,6 @@ export default function RecentSales({ sales = [] }) {
 
   return (
     <div>
-
       <table className="w-full mt-2">
         <thead>
           <tr className="border-b-2 border-neutral-300">
@@ -66,7 +68,10 @@ export default function RecentSales({ sales = [] }) {
               </td>
               <td>
                 {sale.products.map((p) => (
-                  <div key={p._id} className="flex justify-between w-[250px] my-2">
+                  <div
+                    key={p._id}
+                    className="flex justify-between w-[250px] my-2"
+                  >
                     {p.name}
                     <div className="px-2 mr-4 rounded-md bg-green-200">
                       <p className="text-sm text-center text-green-950 font-medium">
