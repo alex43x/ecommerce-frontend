@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useAuth } from "../../context/auth/AuthContext";
 import PosTabs from "../../components/pos/PosTabs";
 import OrderView from "../../components/pos/OrderView";
-import ProductFormModal from "../../components/dashboard/ProductFormModal";
+import ProductFormModal from "../../components/dashboard/products/ProductFormModal";
 import OrderDetail from "../../components/pos/OrderConfirm";
 export default function POS() {
   const { logout } = useAuth();

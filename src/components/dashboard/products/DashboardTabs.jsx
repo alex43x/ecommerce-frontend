@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import Reports from "../../pages/dashboard/Reports";
-import Sales from "../../pages/dashboard/Sales";
-import Products from "../../pages/dashboard/Products";
+import Reports from "../../../pages/dashboard/Reports";
+import Sales from "../../../pages/dashboard/Sales";
+import Products from "../../../pages/dashboard/Products";
 
 export default function DashboardTabs() {
   const [activeTab, setActiveTab] = useState("products");

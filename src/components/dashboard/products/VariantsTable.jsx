@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import eliminar from "../../images/eliminar.png";
-import anadir from "../../images/anadir.png";
+import eliminar from "../../../images/eliminar.png";
+import anadir from "../../../images/anadir.png";
 export default function VariantsTable({ variants, onEdit, editing = false }) {
   const [editData, setEditData] = useState([]);
   const [error, setError] = useState("");

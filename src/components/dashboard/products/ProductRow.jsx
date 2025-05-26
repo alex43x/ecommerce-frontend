@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import VariantsTable from "./VariantsTable"; // Asegúrate que esté el path correcto
-import eliminar from "../../images/eliminar.png";
-import guardar from "../../images/guardar.png";
-import editar from "../../images/editar.png";
+import eliminar from "../../../images/eliminar.png";
+import guardar from "../../../images/guardar.png";
+import editar from "../../../images/editar.png";
 import Swal from "sweetalert2";
 
 export default function ProductRow({

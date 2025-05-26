@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useProduct } from "../../context/product/ProductContext";
-import eliminar from "../../images/eliminar.png";
-import guardar from "../../images/guardar.png";
-import editar from "../../images/editar.png";
+import { useProduct } from "../../../context/product/ProductContext";
+import eliminar from "../../../images/eliminar.png";
+import guardar from "../../../images/guardar.png";
+import editar from "../../../images/editar.png";
 
 export default function CategoriesMenu({ onExit = () => {} }) {
   const {
@@ -87,16 +87,17 @@ export default function CategoriesMenu({ onExit = () => {} }) {
     <div>
       {open && (
         <div>
-          <div className="flex justify-between items-start">
-            <h1 className="text-green-800 mb-4">Categorías</h1>
+          <div className="flex justify-between items-start mb-5">
+            <h1 className="text-green-800 mb-4 w-5 h-5 object-contain">Categorías</h1>
             <button
               type="button"
+              className="mt-2"
               onClick={() => {
                 setOpen(false);
                 onExit(false);
               }}
             >
-              <img className="w-6 h-6 object-contain" src={eliminar} alt="" />
+              <img className="w-5 h-5 object-contain" src={eliminar} alt="" />
             </button>
           </div>
 

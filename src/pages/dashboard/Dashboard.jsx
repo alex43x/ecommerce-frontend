@@ -1,6 +1,6 @@
 import React from "react";
 import { useAuth } from "../../context/auth/AuthContext";
-import DashboardTabs from "../../components/dashboard/DashboardTabs";
+import DashboardTabs from "../../components/dashboard/products/DashboardTabs";
 
 export default function Dashboard() {
   const { user } = useAuth();

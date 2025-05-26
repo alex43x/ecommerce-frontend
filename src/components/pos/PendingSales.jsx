@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSale } from "../../context/sale/SaleContext";
-import ProductFormModal from "../dashboard/ProductFormModal";
+import ProductFormModal from "../dashboard/products/ProductFormModal";
 import OrderDetail from "./OrderConfirm";
 
 export default function PendingSales() {

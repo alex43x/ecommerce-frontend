@@ -6,7 +6,7 @@ import cancelado from "../../images/eliminar.png";
 import listo from "../../images/listo.png";
 import todo from "../../images/todo.png";
 import pendiente from "../../images/pendiente.png";
-import Dropdown from "../../components/dashboard/FilterDropdown";
+import Dropdown from "../../components/dashboard/products/FilterDropdown";
 
 export default function Sales() {
   const { getSales, sales, loading, page, totalPages } = useSale();

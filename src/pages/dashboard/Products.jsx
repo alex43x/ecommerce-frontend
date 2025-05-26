@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { debounce } from "lodash";
 import { useProduct } from "../../context/product/ProductContext";
-import ProductTable from "../../components/dashboard/ProductTable";
-import ProductFormModal from "../../components/dashboard/ProductFormModal";
-import NewProductForm from "../../components/dashboard/NewProductForm";
-import CategoriesMenu from "../../components/dashboard/CategoriesMenu";
-import Dropdown from "../../components/dashboard/FilterDropdown";
+import ProductTable from "../../components/dashboard/products/ProductTable";
+import ProductFormModal from "../../components/dashboard/products/ProductFormModal";
+import NewProductForm from "../../components/dashboard/products/NewProductForm";
+import CategoriesMenu from "../../components/dashboard/products/CategoriesMenu";
+import Dropdown from "../../components/dashboard/products/FilterDropdown";
 
 export default function Products() {
   const {

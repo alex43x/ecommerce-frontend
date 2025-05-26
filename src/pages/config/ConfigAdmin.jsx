@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/auth/AuthContext";
 import { useUser } from "../../context/user/UserContext";
 import EditUser from "../../components/config/EditUser";
-import ProductFormModal from "../../components/dashboard/ProductFormModal";
+import ProductFormModal from "../../components/dashboard/products/ProductFormModal";
 import NewUserForm from "../../components/config/NewUserForm";
 
 export default function ConfigAdmin() {

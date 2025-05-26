@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { useProduct } from "../../context/product/ProductContext";
-import eliminar from "../../images/eliminar.png";
-import anadir from "../../images/anadir.png";
-import guardar from "../../images/guardar.png";
+import { useProduct } from "../../../context/product/ProductContext";
+import eliminar from "../../../images/eliminar.png";
+import anadir from "../../../images/anadir.png";
+import guardar from "../../../images/guardar.png";
 export default function NewProductForm({ onExit = () => {} }) {
   const { createProduct, getProducts, getCategories, categories } =
     useProduct();
