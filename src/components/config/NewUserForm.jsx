@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import Swal from "sweetalert2";
 import { useUser } from "../../context/user/UserContext";
 
+import cerrar from "../../images/eliminar.png";
+import listo from "../../images/listo.png";
+
 export default function NewUserForm({ onExit = () => {} }) {
   const { createUser, getUsers } = useUser();
   const [formData, setFormData] = useState({
@@ -75,61 +78,84 @@ export default function NewUserForm({ onExit = () => {} }) {
   };
 
   return (
-    <form>
-      <label>
-        Nombre:
-        <input
-          type="text"
-          name="name"
-          value={formData.name}
-          onChange={(e) => handleChange(e.target.name, e.target.value)}
+    <form className="w-[620px]">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-2xl font-medium text-green-800 ">Nuevo Usuario</h3>
+        <img
+          onClick={onExit}
+          className="w-4 object-contain"
+          src={cerrar}
+          alt=""
         />
-        {errors.name && <p style={{ color: "red" }}>{errors.name}</p>}
-      </label>
+      </div>
+      <div className="flex gap-2 mb-2 w-full">
+        <div className="w-7/12 pr-2">
+          <section className="w-full flex gap-2 ">
+            <label className="font-medium">Nombre:</label>
+            <input
+              type="text"
+              name="name"
+              className="w-full px-2 "
+              value={formData.name}
+              onChange={(e) => handleChange(e.target.name, e.target.value)}
+            />
+          </section>
+          {errors.name && <p style={{ color: "red" }}>{errors.name}</p>}
+        </div>
+        <div className="w-5/12">
+          <section className="w-full flex gap-2">
+            <label className=" font-medium">Email:</label>
+            <input
+              type="email"
+              name="email"
+              className="w-full px-2"
+              value={formData.email}
+              onChange={(e) => handleChange(e.target.name, e.target.value)}
+            />
+          </section>
+          {errors.email && <p style={{ color: "red" }}>{errors.email}</p>}
+        </div>
+      </div>
+      <div className="flex mb-2 w-full mt-3">
+        <div className="w-6/12 ">
+          <section className="w-full flex gap-1 ">
+            <label className="font-medium">Contraseña:</label>
+            <input
+              type="password"
+              name="password"
+              className=" px-1"
+              value={formData.password}
+              onChange={(e) => handleChange(e.target.name, e.target.value)}
+            />
+          </section>
+          {errors.password && <p style={{ color: "red" }}>{errors.password}</p>}
+        </div>
+        <div className="w-7/12">
+          <section className="w-full flex gap-1">
+            <label className="font-medium">Confirmar contraseña:</label>
+            <input
+              type="password"
+              name="confirmPassword"
+              className="w-6/12 px-1"
+              value={formData.confirmPassword}
+              onChange={(e) => handleChange(e.target.name, e.target.value)}
+            />
+          </section>
+          {errors.confirmPassword && (
+            <p style={{ color: "red" }}>{errors.confirmPassword}</p>
+          )}
+        </div>
+      </div>
 
-      <label>
-        Email:
-        <input
-          type="email"
-          name="email"
-          value={formData.email}
-          onChange={(e) => handleChange(e.target.name, e.target.value)}
-        />
-        {errors.email && <p style={{ color: "red" }}>{errors.email}</p>}
-      </label>
-
-      <label>
-        Contraseña:
-        <input
-          type="password"
-          name="password"
-          value={formData.password}
-          onChange={(e) => handleChange(e.target.name, e.target.value)}
-        />
-        {errors.password && <p style={{ color: "red" }}>{errors.password}</p>}
-      </label>
-
-      <label>
-        Confirmar contraseña:
-        <input
-          type="password"
-          name="confirmPassword"
-          value={formData.confirmPassword}
-          onChange={(e) => handleChange(e.target.name, e.target.value)}
-        />
-        {errors.confirmPassword && (
-          <p style={{ color: "red" }}>{errors.confirmPassword}</p>
-        )}
-      </label>
-
-      <fieldset>
-        <legend>Roles</legend>
+      <section className="flex gap-2 my-2">
+        <legend className="font-medium">Rol: </legend>
         <label>
           Admin
           <input
             type="radio"
             name="role"
             value="admin"
+            className="ml-1"
             checked={formData.role === "admin"}
             onChange={(e) => handleChange("role", e.target.value)}
           />
@@ -140,19 +166,24 @@ export default function NewUserForm({ onExit = () => {} }) {
             type="radio"
             name="role"
             value="cashier"
+            className="ml-1"
             checked={formData.role === "cashier"}
             onChange={(e) => handleChange("role", e.target.value)}
           />
         </label>
         {errors.role && <p style={{ color: "red" }}>{errors.role}</p>}
-      </fieldset>
+      </section>
 
-      <button type="button" onClick={handleSave}>
-        Crear usuario ✅
-      </button>
-      <button type="button" onClick={onExit}>
-        Cancelar ❎
-      </button>
+      <div className="flex justify-center">
+        <button
+          className="font-medium text-green-800 bg-green-200 rounded border border-green-800 flex justify-between gap-2 items-center"
+          type="button"
+          onClick={handleSave}
+        >
+          <p>Crear usuario</p>
+          <img className="w-4 object-contain" src={listo} alt="" />
+        </button>
+      </div>
     </form>
   );
 }

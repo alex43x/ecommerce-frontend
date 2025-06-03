@@ -52,20 +52,18 @@ function App() {
       </Route>
       {/* Rutas para Admin y Users */}
       <Route element={<ProtectedRoute allowedRoles={["admin", "cashier"]} />}>
-        <Route path="/" element={<PosLayout />}>
-          <Route
-            path="/pos"
-            element={
-              <SaleProvider>
-                <CartProvider>
-                  <ProductProvider>
-                    <POS />
-                  </ProductProvider>
-                </CartProvider>
-              </SaleProvider>
-            }
-          />
-        </Route>
+        <Route
+          path="/pos"
+          element={
+            <SaleProvider>
+              <CartProvider>
+                <ProductProvider>
+                  <POS />
+                </ProductProvider>
+              </CartProvider>
+            </SaleProvider>
+          }
+        />
       </Route>
     </Routes>
   );

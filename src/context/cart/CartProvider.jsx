@@ -4,7 +4,7 @@ import { CartContext } from "./CartContext";
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
-  const [paymentMethod, setPaymentMethod] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("cash");
 
   const addToCart = ({ product, variant, quantity = 1 }) => {
     console.log(variant);
@@ -53,9 +53,9 @@ export const CartProvider = ({ children }) => {
     });
   };
 
-  const removeFromCart = (productId) => {
+  const removeFromCart = (variantId) => {
     setCart((prevCart) =>
-      prevCart.filter((item) => item.productId !== productId)
+      prevCart.filter((item) => item.variantId !== variantId)
     );
   };
 

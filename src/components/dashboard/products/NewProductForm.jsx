@@ -182,15 +182,14 @@ export default function NewProductForm({ onExit = () => {} }) {
         category: [],
       });
       onExit(); // opcional: cerrar modal o limpiar pantalla
-      
     } catch (err) {
       console.error(err);
     }
     try {
-        await getProducts({ page: 1, limit: 10, forceRefresh: true });
-      } catch (e) {
-        console.error(e);
-      }
+      await getProducts({ page: 1, limit: 10, forceRefresh: true });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   return (
@@ -224,6 +223,7 @@ export default function NewProductForm({ onExit = () => {} }) {
           <input
             type="number"
             name="price"
+            onWheel={(e) => e.target.blur()}
             className="bg-white w-full px-3 py-1 rounded border"
             min={1}
             value={product.price}
@@ -327,6 +327,7 @@ export default function NewProductForm({ onExit = () => {} }) {
               <input
                 type="number"
                 name="price"
+                onWheel={(e) => e.target.blur()}
                 min={1}
                 className="w-full px-2 py-1 border rounded"
                 value={variant.price}
