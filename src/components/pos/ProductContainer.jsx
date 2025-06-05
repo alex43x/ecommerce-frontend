@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useCart } from "../../context/cart/CartContext";
 
 export default function ProductContainer({ product }) {
   const { cart, addToCart } = useCart();
+  const intervalRef = useRef(null);
+  const activeVariantIdRef = useRef(null);
+  const lastQuantityRef = useRef(0);
 
   const getQuantity = (variantId) => {
     const found = cart.find((item) => item.variantId === variantId);
@@ -11,24 +14,71 @@ export default function ProductContainer({ product }) {
 
   const [selectedVariant, setSelectedVariant] = useState(() => {
     const v = product.variants[0];
+    const qty = getQuantity(v._id);
+    lastQuantityRef.current = qty;
+    activeVariantIdRef.current = v._id;
+
     return {
-      _id: v._id,
-      variantName: v.variantName || "",
-      price: v.price || 0,
-      iva: v.iva || 0,
-      quantity: getQuantity(v._id),
+      ...v,
+      quantity: qty,
       index: 0,
     };
   });
 
   useEffect(() => {
     const v = product.variants[selectedVariant.index] || product.variants[0];
+    const qty = getQuantity(v._id);
+    lastQuantityRef.current = qty;
+    activeVariantIdRef.current = v._id;
+
     setSelectedVariant((prev) => ({
       ...v,
       index: prev.index,
-      quantity: getQuantity(v._id),
+      quantity: qty,
     }));
   }, [cart, product]);
+
+  const handleQuantityChange = (e) => {
+    let value = parseInt(e.target.value);
+    if (isNaN(value) || value < 0) value = 0;
+
+    const current = getQuantity(selectedVariant._id);
+    const diff = value - current;
+    if (diff !== 0) {
+      addToCart({ product, variant: selectedVariant, quantity: diff });
+    }
+  };
+
+  const stopHold = () => {
+    clearInterval(intervalRef.current);
+    intervalRef.current = null;
+  };
+
+  const handleHold = (change) => {
+    if (intervalRef.current) return;
+
+    intervalRef.current = setInterval(() => {
+      const qty = lastQuantityRef.current;
+
+      if (change < 0 && qty <= 0) {
+        stopHold();
+        return;
+      }
+
+      const variant = product.variants.find(
+        (v) => v._id === activeVariantIdRef.current
+      );
+      if (!variant) return;
+
+      addToCart({
+        product,
+        variant: { ...variant, index: selectedVariant.index },
+        quantity: change,
+      });
+
+      lastQuantityRef.current = qty + change; // actualizar manualmente
+    }, 150);
+  };
 
   return (
     <div className="bg-green-50 rounded-2xl p-4 shadow-2xl flex flex-col justify-between h-full">
@@ -49,7 +99,7 @@ export default function ProductContainer({ product }) {
         <div className="grid grid-cols-3 gap-2 text-green-800 mb-2">
           {product.variants?.map((variant, index) => (
             <button
-              className="bg-green-200 border border-green-900"
+              className="bg-green-200 active:bg-green-300 transition border border-green-900"
               key={variant._id}
               onClick={() => {
                 const variantQty = getQuantity(variant._id);
@@ -58,30 +108,66 @@ export default function ProductContainer({ product }) {
                   index,
                   quantity: variantQty,
                 });
+                activeVariantIdRef.current = variant._id;
+                lastQuantityRef.current = variantQty;
               }}
             >
               {variant.abreviation}
             </button>
           ))}
         </div>
+
         <div className="flex w-full justify-between rounded-xl px-2 py-1 bg-neutral-200 items-center">
-          <div className="rounded-full bg-green-700 w-6 h-6 flex justify-center items-center">
+          <div
+            className="rounded-lg bg-green-700 hover:bg-green-600 active:bg-green-500 transition w-10 h-8 text-2xl flex justify-center items-center"
+            onMouseDown={() => handleHold(-1)}
+            onMouseUp={stopHold}
+            onMouseLeave={stopHold}
+            onTouchStart={() => handleHold(-1)}
+            onTouchEnd={stopHold}
+          >
             <button
               className="text-neutral-100"
-              disabled={selectedVariant.quantity === 0}
               onClick={() => {
-                addToCart({ product, variant: selectedVariant, quantity: -1 });
+                if (selectedVariant.quantity > 0) {
+                  addToCart({
+                    product,
+                    variant: selectedVariant,
+                    quantity: -1,
+                  });
+                  lastQuantityRef.current = selectedVariant.quantity - 1;
+                }
               }}
             >
               -
             </button>
           </div>
-          <p className="font-medium">{selectedVariant.quantity || 0}</p>
-          <div className="rounded-full bg-green-700 w-6 h-6 flex justify-center items-center">
+
+          <input
+            className="font-medium bg-neutral-200 w-16 px-1 text-center text-lg"
+            type="number"
+            min={0}
+            value={selectedVariant.quantity || 0}
+            onChange={handleQuantityChange}
+          />
+
+          <div
+            className="rounded-lg bg-green-700 hover:bg-green-600 active:bg-green-500 transition w-10 h-8 text-2xl flex justify-center items-center"
+            onMouseDown={() => handleHold(1)}
+            onMouseUp={stopHold}
+            onMouseLeave={stopHold}
+            onTouchStart={() => handleHold(1)}
+            onTouchEnd={stopHold}
+          >
             <button
               className="text-neutral-100"
               onClick={() => {
-                addToCart({ product, variant: selectedVariant, quantity: 1 });
+                addToCart({
+                  product,
+                  variant: selectedVariant,
+                  quantity: 1,
+                });
+                lastQuantityRef.current = selectedVariant.quantity + 1;
               }}
             >
               +

@@ -16,6 +16,12 @@ export default function PaymentMethodReport({
     "rgba(144, 238, 144, 0.6)",
     "rgba(0, 100, 0, 0.6)",
   ];
+  const methodMap = {
+    card: "Tarjeta",
+    cash: "Efectivo",
+    qr: "QR",
+  };
+
   return (
     <div className="border-t-2 border-neutral-300 mx-5">
       <h3 className="text-green-800 text-3xl font-semibold mt-6">
@@ -69,15 +75,17 @@ export default function PaymentMethodReport({
                 payment.map((day, index) => (
                   <tr key={index} className="border-b-2 border-neutral-300">
                     <td className="py-1 capitalize font-medium">
-                      {day.paymentMethod}
+                      {methodMap[day.paymentMethod] || day.paymentMethod}
                     </td>
-                    <td className="px-2">{day.transactionCount.toLocaleString("es-ES")}</td>
+                    <td className="px-2">
+                      {day.transactionCount.toLocaleString("es-ES")}
+                    </td>
                     <td>₲ {day.totalSales.toLocaleString("es-ES")}</td>
                     <td>
                       ₲{" "}
-                      {(day.totalSales / day.transactionCount).toFixed().toLocaleString(
-                        "es-ES"
-                      )}
+                      {(day.totalSales / day.transactionCount)
+                        .toFixed()
+                        .toLocaleString("es-ES")}
                     </td>
                   </tr>
                 ))

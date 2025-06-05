@@ -29,7 +29,7 @@ export default function PendingSales() {
           sales.map((sale, index) => (
             <section
               key={sale._id}
-              className="rounded-lg bg-neutral-100 p-3 shadow"
+              className="rounded-lg bg-neutral-50 p-3 shadow"
             >
               <div className="flex justify-between items-center mb-2 border-b-2 border-neutral-200 pb-2">
                 <h3 className="font-medium text-lg">Orden #{index + 1}</h3>

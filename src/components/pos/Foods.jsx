@@ -90,7 +90,7 @@ export default function Foods({ categories }) {
         <p className="font-medium text-xl">Buscar:</p>
         <input
           type="text"
-          className="border px-2 py-1 rounded-lg"
+          className="border px-2 py-1 rounded-lg bg-neutral-50"
           placeholder="Buscar producto..."
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
@@ -98,7 +98,7 @@ export default function Foods({ categories }) {
 
         <input
           type="text"
-          className="px-2 py-1"
+          className="px-2 py-1 bg-neutral-50"
           placeholder="Código de Barras"
           value={barcode}
           onChange={(e) => setBarcode(e.target.value)}

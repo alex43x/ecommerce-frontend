@@ -43,6 +43,12 @@ export default function RecentSales({ sales = [], onCancel }) {
     canceled: { label: "Cancelado", bg: "bg-red-200", text: "text-red-800" },
   };
 
+  const methodMap = {
+    card: "Tarjeta",
+    cash: "Efectivo",
+    qr: "QR",
+  };
+
   if (!sales.length) return <p>No hay ventas recientes.</p>;
 
   return (
@@ -51,10 +57,10 @@ export default function RecentSales({ sales = [], onCancel }) {
         <thead>
           <tr className="border-b-2 border-neutral-300">
             <th className="w-[135px] text-left align-top">Fecha y Hora</th>
-            <th className="w-[250px] text-left">Productos</th>
-            <th>Total</th>
+            <th className="w-[220px] text-left">Productos</th>
+            <th className="w-[80px]">Total</th>
             <th>RUC</th>
-            <th>Método de Pago</th>
+            <th>Método(s) de Pago</th>
             <th>Estado</th>
             <th>Registrado Por</th>
             <th>Acción</th>
@@ -70,7 +76,7 @@ export default function RecentSales({ sales = [], onCancel }) {
                 {sale.products.map((p) => (
                   <div
                     key={p._id}
-                    className="flex justify-between w-[250px] my-2"
+                    className="flex justify-between w-[220px] my-2"
                   >
                     {p.name}
                     <div className="px-2 mr-4 rounded-md bg-green-200">
@@ -83,7 +89,19 @@ export default function RecentSales({ sales = [], onCancel }) {
               </td>
               <td>₲ {sale.totalAmount.toFixed()}</td>
               <td className="px-2">{sale.ruc}</td>
-              <td className="capitalize px-2">{sale.paymentMethod}</td>
+              <td className="capitalize px-2">
+                <div className="">
+                  {sale.payment.map((p, index) => (
+                    <div
+                      key={index}
+                      className="bg-neutral-50 border-2 border-neutral-400 px-2 rounded w-fit my-2 py-1"
+                    >
+                      {methodMap[p.paymentMethod] || p.paymentMethod}: ₲
+                      {p.totalAmount}
+                    </div>
+                  ))}
+                </div>
+              </td>
               <td className="text-center pr-2">
                 <p
                   className={`px-1 py-1 rounded-md text-sm font-semibold w-11/12 ${

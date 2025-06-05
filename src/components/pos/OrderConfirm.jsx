@@ -1,56 +1,112 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+
 import { useCart } from "../../context/cart/CartContext";
 import { useAuth } from "../../context/auth/AuthContext";
 import { useSale } from "../../context/sale/SaleContext";
+
+import Swal from "sweetalert2";
+
 import cerrar from "../../images/eliminar.png";
 import listo from "../../images/listo.png";
 import guardar from "../../images/guardar.png";
 import borrar from "../../images/borrar.png";
-
 import cash from "../../images/cash.png";
 import card from "../../images/card.png";
 import qr from "../../images/qr.png";
-import Swal from "sweetalert2";
 
 export default function OrderDetail({ onExit = () => {}, saleData = null }) {
   const { cart, setCart, totalAmount, paymentMethod, setPaymentMethod } =
     useCart();
   const { user } = useAuth();
-  const { createSale, updateSaleStatus, getSales } = useSale();
-  const [ruc, setRuc] = useState(saleData?.ruc || "");
-  const [received, setReceived] = useState(0);
+  const { createSale, getSales } = useSale();
+
+  const paymentOptions = [
+    { value: "cash", label: "Efectivo", icon: cash },
+    { value: "card", label: "Tarjeta", icon: card },
+    { value: "qr", label: "QR", icon: qr },
+  ];
+
+  const [ruc, setRuc] = useState(saleData?.ruc || ""); //Ruc del cliente
+  const [received, setReceived] = useState(0); //Acumulador de monto recibido para calcular vuelto (Pago por un medio)
+  const [multi, setMulti] = useState(false); //Bandera de pago múltiple
+  const [multiPayments, setMultiPayments] = useState(
+    paymentOptions.map((opt) => ({ paymentMethod: opt.value, totalAmount: 0 }))
+  ); //Array de pagos, por distintos medios
+  const [paymentError, setPaymentError] = useState(false); //Estado de errores para el pago
 
   const items = saleData?.products || cart;
   const total = saleData?.totalAmount || totalAmount;
-
-
   const vuelto = received - total;
 
+  const handleKeyPress = (num) => {
+    setReceived((prev) => parseInt(`${prev}${num}`));
+  };
+
+  const handleClear = () => {
+    setReceived((prev) => Math.floor(prev / 10));
+  };
+
+  const handlePaymentChange = (method, value) => {
+    const updated = multiPayments.map((p) =>
+      p.paymentMethod === method
+        ? { ...p, totalAmount: parseInt(value) || 0 }
+        : p
+    );
+    setMultiPayments(updated);
+  };
+
+  const getValidPayments = () => multiPayments.filter((p) => p.totalAmount > 0);
+  useEffect(() => {
+    console.log(multiPayments);
+    console.log(getValidPayments());
+    console.log(buildPaymentData(), multi);
+  }, [multiPayments]);
+
+  const buildPaymentData = () => {
+    return multi ? getValidPayments() : [{ paymentMethod, totalAmount }];
+  };
+
+  const totalMultiPayment = getValidPayments().reduce(
+    (sum, p) => sum + p.totalAmount,
+    0
+  );
   const handleSave = async () => {
     if (!ruc.trim()) {
-      return Swal.fire(
-        "Campo requerido",
-        "Por favor ingresa un RUC",
-        "warning"
-      );
+      return Swal.fire({
+        title: "Campo requerido",
+        text: "Por favor ingresa un RUC",
+        icon: "warning",
+        confirmButtonText: "Aceptar",
+        confirmButtonColor: "#057c37",
+      });
     }
 
+    if (multi && totalMultiPayment < totalAmount) {
+      setPaymentError(true);
+      return Swal.fire({
+        title: "Monto insuficiente",
+        text: "La suma de los pagos no cubre el total",
+        icon: "error",
+        confirmButtonText: "Aceptar",
+        confirmButtonColor: "#057c37",
+      });
+    }
+
+    setPaymentError(false); // limpiar error si pasa la validación
+
+    const sale = {
+      products: cart,
+      totalAmount,
+      ruc,
+      payment: buildPaymentData(),
+      iva: Math.ceil(totalAmount / 11),
+      user: user.id,
+      status: "completed",
+    };
+
     try {
-      if (saleData) {
-        await updateSaleStatus(saleData._id, "completed", ruc);
-      } else {
-        const sale = {
-          products: cart,
-          totalAmount,
-          ruc,
-          paymentMethod,
-          iva: Math.ceil(totalAmount / 11),
-          user: user.id,
-          status: "completed",
-        };
-        await createSale(sale);
-        setCart([]);
-      }
+      await createSale(sale);
+      setCart([]);
       Swal.fire(
         "Venta completada",
         "La venta fue registrada con éxito",
@@ -63,15 +119,15 @@ export default function OrderDetail({ onExit = () => {}, saleData = null }) {
     }
   };
 
-  const handleKeyPress = (num) => {
-    setReceived((prev) => parseInt(`${prev}${num}`));
-  };
-
-  const handleClear = () => {
-    setReceived((prev) => Math.floor(prev / 10));
-  };
-
+  //Para ventas no concluidas (Pedidos)
   const handleSavePendingSale = async () => {
+    const status = //Si se pagó algo se guarda como ordered, de lo contrario se guarda como pending
+      buildPaymentData().length === 0
+        ? "pending"
+        : buildPaymentData().some((p) => p.totalAmount > 0)
+        ? "ordered"
+        : "pending"; // por si acaso algún pago tiene 0
+
     const provisionalSale = {
       products: cart.map((item) => ({
         productId: item.productId,
@@ -82,16 +138,18 @@ export default function OrderDetail({ onExit = () => {}, saleData = null }) {
       })),
       totalAmount,
       ruc: "Sin RUC",
-      paymentMethod,
+      payment: buildPaymentData(),
       iva: (totalAmount / 11).toFixed(),
       user: user.id,
-      status: "pending",
+      status,
     };
 
     try {
       await createSale(provisionalSale);
       await getSales({ page: 1, limit: 20, forceRefresh: true });
       Swal.fire("Guardado", "Venta guardada como pendiente", "success");
+      setCart([]);
+      onExit();
     } catch (e) {
       console.error("Error al guardar venta pendiente:", e);
       Swal.fire("Error", "No se pudo guardar la venta pendiente", "error");
@@ -113,7 +171,7 @@ export default function OrderDetail({ onExit = () => {}, saleData = null }) {
       </div>
       <div className="flex">
         <section className="w-1/2 pr-1">
-          <div className="p-2 bg-[#dae4e4] rounded-lg h-40 max-h-40 overflow-y-auto">
+          <div className="p-2 bg-[#dae4e4] rounded-lg h-52 max-h-52 overflow-y-auto">
             <table className="w-full">
               <thead>
                 <tr className="text-left border-b-2 border-neutral-100">
@@ -152,7 +210,7 @@ export default function OrderDetail({ onExit = () => {}, saleData = null }) {
               <p>Total</p>
               <p className="text-green-900">₲ {total.toLocaleString()}</p>
             </div>
-            <div className="flex justify-between  py-1 border-t-2 border-dashed  border-neutral-50">
+            <div className="flex justify-between  py-1 border-t-2 border-dashed border-neutral-50">
               <p>Vuelto</p>
               <p className="text-green-900">
                 ₲ {vuelto > 0 ? vuelto.toLocaleString() : 0}
@@ -162,69 +220,108 @@ export default function OrderDetail({ onExit = () => {}, saleData = null }) {
         </section>
 
         <section className="w-1/2 pl-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mb-2">
             <label className="font-medium">RUC: </label>
             <input
               required
               value={ruc}
               onChange={(e) => setRuc(e.target.value)}
               type="text"
-              className="px-2 py-1 w-full "
+              className="px-2 py-1 w-full bg-neutral-50"
             />
           </div>
 
-          <div>
-            <div className="flex justify-center  p-2  mb-2 text-xl text-right font-medium">
-              ₲ {received.toLocaleString()}
-            </div>
-            <div className="grid grid-cols-3 gap-2 mb-2 px-4">
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-                <button
-                  key={num}
-                  onClick={() => handleKeyPress(num)}
-                  className="bg-green-100 active:bg-green-200 transition text-xl rounded text-green-800"
-                >
-                  {num}
-                </button>
-              ))}
-              <div></div> {/* Espacio vacío a la izquierda */}
-              <button
-                onClick={() => handleKeyPress(0)}
-                className="bg-green-100 active:bg-green-200 transition text-xl rounded  text-green-800"
-              >
-                0
-              </button>
-              <button
-                onClick={handleClear}
-                className="bg-red-100  p-2 rounded text-red-800 flex justify-center"
-              >
-                <img className="w-5 object-contain" src={borrar} alt="Borrar" />
-              </button>
-            </div>
+          <div className="mb-2 flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="multi"
+              className="w-8 h-8 "
+              checked={multi}
+              onChange={() => setMulti(!multi)}
+            />
+            <label htmlFor="multi" className="text">
+              Pago Múltiple
+            </label>
           </div>
-          <section className="flex bg-neutral-200 rounded-lg my-3">
-            {[
-              { value: "cash", label: "Efectivo", icon: cash },
-              { value: "card", label: "Tarjeta", icon: card },
-              { value: "qr", label: "QR", icon: qr },
-            ].map(({ value, label, icon }) => (
-              <button
-                key={value}
-                className={`w-1/3 flex items-center justify-center gap-1 p-1 rounded-lg ${
-                  paymentMethod === value
-                    ? "bg-green-200 border border-green-800 text-green-800"
-                    : ""
-                }`}
-                type="button"
-                value={value}
-                onClick={() => setPaymentMethod(value)}
-              >
-                <p>{label}</p>
-                <img className="w-4 object-contain" src={icon} alt="" />
-              </button>
-            ))}
-          </section>
-          <section className="flex gap-2 justify-evenly mt-3">
+
+          {multi ? (
+            <div className="space-y-2">
+              {paymentOptions.map(({ value, label, icon }) => (
+                <div key={value} className="flex items-center gap-2">
+                  <img src={icon} alt={label} className="w-5" />
+                  <p className="w-20">{label}</p>
+                  <input
+                    type="number"
+                    className="px-2 py-1 w-full border rounded bg-neutral-50"
+                    placeholder="Monto ₲"
+                    min={0}
+                    value={
+                      multiPayments.find((p) => p.paymentMethod === value)
+                        ?.totalAmount || ""
+                    }
+                    onChange={(e) => handlePaymentChange(value, e.target.value)}
+                  />
+                </div>
+              ))}
+              {paymentError && (
+                <p className="text-red-600 text-sm mt-1">
+                  La suma no alcanza el total requerido.
+                </p>
+              )}
+            </div>
+          ) : (
+            <div>
+              <div className="flex bg-neutral-200 rounded-lg my-3">
+                {paymentOptions.map(({ value, label, icon }) => (
+                  <button
+                    key={value}
+                    className={`w-1/3 flex items-center justify-center gap-1 p-1 rounded-lg ${
+                      paymentMethod === value
+                        ? "bg-green-200 border border-green-800 text-green-800"
+                        : ""
+                    }`}
+                    type="button"
+                    onClick={() => setPaymentMethod(value)}
+                  >
+                    <p>{label}</p>
+                    <img className="w-4 object-contain" src={icon} alt="" />
+                  </button>
+                ))}
+              </div>
+
+              <p className="text-center text-xl font-medium">₲ {received}</p>
+              <div className="mt-4 grid grid-cols-3 gap-2 px-4">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+                  <button
+                    key={n}
+                    className="bg-green-100 active:bg-green-200 transition text-xl rounded text-green-800"
+                    onClick={() => handleKeyPress(n)}
+                  >
+                    {n}
+                  </button>
+                ))}
+                <div></div>
+                <button
+                  className="bg-green-100 active:bg-green-200 transition text-xl rounded text-green-800"
+                  onClick={() => handleKeyPress(0)}
+                >
+                  0
+                </button>
+                <button
+                  onClick={handleClear}
+                  className="bg-red-100 p-2 rounded text-red-800 flex justify-center"
+                >
+                  <img
+                    className="w-5 object-contain"
+                    src={borrar}
+                    alt="Borrar"
+                  />
+                </button>
+              </div>
+            </div>
+          )}
+
+          <section className="flex gap-2 justify-evenly mt-4">
             <button
               className="bg-green-200 border border-green-800 rounded-lg text-green-800 flex gap-1 px-2 py-1 w-4/12 justify-evenly"
               type="button"
@@ -234,14 +331,10 @@ export default function OrderDetail({ onExit = () => {}, saleData = null }) {
               <img className="w-4 object-contain" src={listo} alt="" />
             </button>
             <button
-              disabled={!paymentMethod || cart.length === 0}
+              disabled={!cart.length}
               className="bg-neutral-100 border border-neutral-800 rounded-lg flex gap-1 px-2 py-1 w-8/12 justify-evenly"
               type="button"
-              onClick={() => {
-                handleSavePendingSale();
-                setCart([]);
-                onExit();
-              }}
+              onClick={handleSavePendingSale}
             >
               <p>Guardar Pendiente</p>
               <img className="w-4 object-contain" src={guardar} alt="" />
