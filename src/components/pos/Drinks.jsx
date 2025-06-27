@@ -54,11 +54,11 @@ export default function Drinks() {
       });
     } else if (product?.message) {
       Swal.fire({
-      icon: "error",
-      title: "No encontrado",
-      text: "No existe producto con ese código",
-      confirmButtonColor: "#166534",
-    });
+        icon: "error",
+        title: "No encontrado",
+        text: "No existe producto con ese código",
+        confirmButtonColor: "#057c37",
+      });
     }
 
     setTriggeredByScan(false);
@@ -87,23 +87,26 @@ export default function Drinks() {
 
   return (
     <div>
-      <section className="flex mt-2 gap-2 items-center">
+      <section className="flex mt-4 gap-2 items-center">
         <p className="font-medium text-xl">Buscar:</p>
-        <input
-          type="text"
-          className="border px-2 py-1 rounded-lg bg-neutral-50"
-          placeholder="Buscar producto..."
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-        />
-        <input
-          type="text"
-          className="px-2 py-1 border rounded-lg bg-neutral-50"
-          placeholder="Código de Barras"
-          value={barcode}
-          onChange={(e) => setBarcode(e.target.value)}
-          onKeyDown={handleKeyDown}
-        />
+        <div className="flex gap-2 w-full">
+          <input
+            type="text"
+            className=" px-2 py-1 rounded-lg bg-neutral-50 w-7/12"
+            placeholder="Buscar producto..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
+
+          <input
+            type="text"
+            className="px-2 py-1 rounded-lg bg-neutral-50"
+            placeholder="Código de Barras"
+            value={barcode}
+            onChange={(e) => setBarcode(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+        </div>
       </section>
 
       <div className="grid grid-cols-2 gap-3 my-3">

@@ -91,7 +91,12 @@ export default function ProductContainer({ product }) {
         <h3 className="text-xl font-medium mt-1">{product.name}</h3>
         <div className="flex justify-between mb-2 items-center font-medium">
           <p className="text-green-900">{selectedVariant.variantName}</p>
-          <p>₲ {selectedVariant.price.toLocaleString()}</p>
+          <p>
+            {selectedVariant.price.toLocaleString("es-PY", {
+              style: "currency",
+              currency: "PYG",
+            })}
+          </p>
         </div>
       </div>
 
@@ -99,7 +104,11 @@ export default function ProductContainer({ product }) {
         <div className="grid grid-cols-3 gap-2 text-green-800 mb-2">
           {product.variants?.map((variant, index) => (
             <button
-              className="bg-green-200 active:bg-green-300 transition border border-green-900"
+              className={` active:bg-green-300 transition border border-green-900 ${
+                selectedVariant._id == variant._id
+                  ? "bg-green-300"
+                  : "bg-green-100"
+              }`}
               key={variant._id}
               onClick={() => {
                 const variantQty = getQuantity(variant._id);

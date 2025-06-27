@@ -7,7 +7,7 @@ export default function DashboardTabs() {
   const [activeTab, setActiveTab] = useState("products");
 
   const tabClasses = (tab) =>
-    `px-4 py-2 rounded-md text-sm transition-colors ${
+    `px-4 py-2 rounded-md text-md transition-colors ${
       activeTab === tab
         ? "bg-green-700 text-white"
         : "bg-gray-200 hover:bg-gray-300 border border-green-700 text-green-800"
@@ -16,7 +16,7 @@ export default function DashboardTabs() {
   return (
     <div className="">
       {/* Tabs visibles en todo momento */}
-      <div className="flex flex-wrap items-center gap-2 mb-4">
+      <div className="flex flex-wrap items-center gap-2 mb-4 ">
         <button className={tabClasses("products")} onClick={() => setActiveTab("products")}>
           Productos
         </button>
@@ -25,6 +25,9 @@ export default function DashboardTabs() {
         </button>
         <button className={tabClasses("reportes")} onClick={() => setActiveTab("reportes")}>
           Reportes
+        </button>
+        <button className={tabClasses("clientes")} onClick={() => setActiveTab("clientes")}>
+          Clientes
         </button>
       </div>
 

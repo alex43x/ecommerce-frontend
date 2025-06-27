@@ -13,6 +13,7 @@ export default function ProductFormModal({ isOpen, onClose, children }) {
         width: "100vw",
         height: "100vh",
         backgroundColor: "rgba(0, 0, 0, 0.5)",
+        backdropFilter: "blur(2px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",

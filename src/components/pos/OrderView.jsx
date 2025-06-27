@@ -1,29 +1,32 @@
 import React, { useState } from "react";
 import { useCart } from "../../context/cart/CartContext";
 
-import listo from "../../images/listo.png";
+import ProductFormModal from "../dashboard/products/ProductFormModal";
+import OrderDetail from "./OrderConfirm";
+
 import vaciar from "../../images/vaciar.png";
 import carrito from "../../images/carrito.png";
 
-export default function OrderView({ onConfirm = () => {} }) {
+export default function OrderView() {
   const { cart, setCart, totalAmount, removeFromCart, paymentMethod } =
     useCart();
   const [saleMode, setSaleMode] = useState("local");
+  const [confirmOrder, setConfirmOrder] = useState(false);
 
   return (
     <div className="flex flex-col h-screen">
       {/* Parte superior */}
       <div className="flex flex-col gap-2 flex-grow overflow-hidden">
-        <h1 className="mt-4 text-green-900">Nueva Orden</h1>
+        <h1 className="mt-4 text-green-900 font-medium">Nueva Orden</h1>
 
         {/* Modo de venta */}
-        <section className="flex gap-2 bg-neutral-200 rounded-lg my-3 justify-evenly">
+        <section className="flex  bg-neutral-200 rounded-lg my-3 justify-evenly">
           {["local", "carry", "delivery"].map((mode) => (
             <button
               key={mode}
               className={
                 saleMode === mode
-                  ? "bg-green-200 border border-green-800 text-green-800 rounded-lg p-1"
+                  ? "bg-green-200 border border-green-800 text-green-800 rounded-lg py-1 px-2 "
                   : ""
               }
               type="button"
@@ -39,11 +42,18 @@ export default function OrderView({ onConfirm = () => {} }) {
           ))}
         </section>
 
-        <div className="flex justify-between pr-3">
-          <h3 className="font-medium text-xl text-green-800">
+        <div className="flex justify-between items-center pr-3">
+          <h3 className="font-medium text-lg text-green-800">
             Productos Seleccionados:
           </h3>
-          <img className="w-7 object-contain" src={vaciar} alt="vaciar" onClick={()=>{setCart([])}} />
+          <img
+            className="w-5 h-5 object-contain"
+            src={vaciar}
+            alt="vaciar"
+            onClick={() => {
+              setCart([]);
+            }}
+          />
         </div>
 
         {/* Carrito */}
@@ -58,20 +68,32 @@ export default function OrderView({ onConfirm = () => {} }) {
           ) : (
             cart.map((item) => (
               <section
-                className="border border-green-700 rounded-lg p-1.5 mb-2"
-                key={item.productId}
+                className="border border-green-700 rounded-lg p-1.5 mb-2 bg-neutral-50"
+                key={item.variantId}
               >
                 <div className="flex justify-between font-medium">
-                  <p className="w-7/12 text-green-900">
-                    {item.name} x{item.quantity}
-                  </p>
-                  <p className="text-green-700">₲ {item.totalPrice}</p>
-                  <button
-                    className="bg-green-800 text-neutral-50 h-5 text-sm flex items-center"
-                    onClick={() => removeFromCart(item.variantId)}
-                  >
-                    x
-                  </button>
+                  <div className="w-7/12 flex flex-wrap justify-between text-green-900">
+                    <p>{item.name}</p>
+                  </div>
+                  <div>
+                    <div className="flex gap-2">
+                      <div className="rounded w-fit h-fit px-1 bg-green-200 text-green-800 ">
+                        <p>x{item.quantity}</p>
+                      </div>
+                      <p className="text-green-700">
+                        {item.totalPrice.toLocaleString("es-PY", {
+                          style: "currency",
+                          currency: "PYG",
+                        })}
+                      </p>
+                    </div>
+                    <button
+                      className="bg-green-200 text-green-800 h-6 w-5 text-sm flex justify-center ml-auto items-center  border border-green-800"
+                      onClick={() => removeFromCart(item.variantId)}
+                    >
+                      x
+                    </button>
+                  </div>
                 </div>
               </section>
             ))
@@ -80,19 +102,35 @@ export default function OrderView({ onConfirm = () => {} }) {
       </div>
 
       {/* Parte inferior */}
-      <div className="space-y-2 p-2">
+      <div className="space-y-2 py-2">
         <section className="bg-[#dae4e4] p-2 font-medium rounded-lg">
           <div className="flex justify-between">
             <p>Subtotal: </p>
-            <p className="text-green-900">₲ {(totalAmount / 1.1).toFixed()}</p>
+            <p className="text-green-900">
+              {" "}
+              {(totalAmount / 1.1).toLocaleString("es-PY", {
+                style: "currency",
+                currency: "PYG",
+              })}
+            </p>
           </div>
           <div className="flex justify-between">
             <p>IVA 10%</p>
-            <p className="text-green-900">₲ {(totalAmount / 11).toFixed()}</p>
+            <p className="text-green-900">
+              {(totalAmount / 11).toLocaleString("es-PY", {
+                style: "currency",
+                currency: "PYG",
+              })}
+            </p>
           </div>
           <div className="flex justify-between text-xl py-1 mt-1 border-t-2 border-dashed">
             <p>Total</p>
-            <p className="text-green-900">₲ {totalAmount.toLocaleString()}</p>
+            <p className="text-green-900">
+              {Number(totalAmount).toLocaleString("es-PY", {
+                style: "currency",
+                currency: "PYG",
+              })}
+            </p>
           </div>
         </section>
 
@@ -102,14 +140,20 @@ export default function OrderView({ onConfirm = () => {} }) {
             className="bg-green-200 border border-green-800 rounded-lg text-green-800 flex gap-2 px-2 py-1 w-full justify-evenly"
             type="button"
             onClick={() => {
-              onConfirm();
+              setConfirmOrder(true);
             }}
           >
-            <p className="text-2xl">Confirmar Venta</p>
-            <img className="w-5 object-contain" src={listo} alt="" />
+            <p className="text-2xl">Terminar Venta</p>
           </button>
         </section>
       </div>
+      {/* Modal */}
+      <ProductFormModal
+        isOpen={confirmOrder}
+        onClose={() => setConfirmOrder(false)}
+      >
+        <OrderDetail onExit={() => setConfirmOrder(false)} mode={saleMode} paymentMode="first"/>
+      </ProductFormModal>
     </div>
   );
 }

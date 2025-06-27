@@ -14,6 +14,7 @@ import ConfigAdmin from "./pages/config/ConfigAdmin";
 import PosLayout from "./layouts/PosLayout";
 import { CartProvider } from "./context/cart/CartProvider";
 import { ReportProvider } from "./context/report/ReportProvider";
+import { CustomerProvider } from "./context/customer/CustomerProvider";
 
 function App() {
   return (
@@ -55,13 +56,15 @@ function App() {
         <Route
           path="/pos"
           element={
-            <SaleProvider>
-              <CartProvider>
-                <ProductProvider>
-                  <POS />
-                </ProductProvider>
-              </CartProvider>
-            </SaleProvider>
+            <CustomerProvider>
+              <SaleProvider>
+                <CartProvider>
+                  <ProductProvider>
+                    <POS />
+                  </ProductProvider>
+                </CartProvider>
+              </SaleProvider>
+            </CustomerProvider>
           }
         />
       </Route>
