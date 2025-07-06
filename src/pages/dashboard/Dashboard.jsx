@@ -14,7 +14,7 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h1 className="text-green-800 inline">Dashboard</h1>
+      <h1 className="text-green-800 inline">Principal</h1>
       <p className=" font-medium my-4 inline ml-6">{fechaFormateada}</p>
       <p className=" font-medium text-xl my-2">Hola, {user.name}</p>
       <DashboardTabs />

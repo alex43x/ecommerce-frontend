@@ -18,7 +18,8 @@ export default function ProductVariantSelector({
       if (debouncedSearchTerm) {
         const results = await searchProductVariants(debouncedSearchTerm);
         // filtrar los que ya están seleccionados
-        const filtered = results.filter(
+        console.log(results)
+        const filtered = results.data.filter(
           (variant) =>
             !selectedVariants.some((v) => v.variantId === variant.variantId)
         );
@@ -79,7 +80,7 @@ export default function ProductVariantSelector({
               <li
                 key={variant.variantId}
                 onClick={() => handleSelect(variant)}
-                className="px-3 py-2 hover:bg-green-200 cursor-pointer"
+                className="px-3 py-2 hover:bg-green-200 cursor-pointer text-green-800"
               >
                 {variant.name}
               </li>

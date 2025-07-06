@@ -19,9 +19,10 @@ export default function ProductReport({
   useEffect(() => {
     console.log("weekly", productsWeekly);
   }, [productsWeekly]);
+
   const renderDateInputs = () => (
-    <div className="mb-2">
-      <label className="mr-2 font-medium text-lg">Desde:</label>
+    <div className="flex flex-wrap items-center mt-2 gap-2">
+      <label className="text-green-800 text-xl">Desde:</label>
       <input
         type="date"
         className="px-2 py-1"
@@ -31,7 +32,7 @@ export default function ProductReport({
           setProductDateRange({ ...productDateRange, start: e.target.value })
         }
       />
-      <label className="ml-4 mr-2 font-medium text-lg">Hasta:</label>
+      <label className="text-green-800 text-xl ml-3">Hasta:</label>
       <input
         type="date"
         className="px-2 py-1"
@@ -46,59 +47,83 @@ export default function ProductReport({
 
   const renderBarChart = () =>
     products?.length > 0 && (
-      <div className="flex flex-wrap">
-        <section className="w-7/12 pr-6">
+      <div className="flex flex-col md:flex-row mt-4 gap-4">
+        <section className="w-full md:w-7/12 pt-4 flex">
           <Bar
-            className="mt-6"
             data={{
               labels: products.map((p) => p.name),
               datasets: [
                 {
-                  label: "Ventas totales",
+                  label: "Ventas Totales",
                   data: products.map((p) => p.totalRevenue),
                   backgroundColor: greenShades,
+                  borderColor: "rgba(0, 100, 0, 1)",
+                  borderWidth: 1,
                 },
               ],
             }}
+            options={{
+              responsive: true,
+              plugins: {
+                legend: {
+                  display: false,
+                },
+              },
+              scales: {
+                y: {
+                  position: "left",
+                },
+              },
+            }}
           />
         </section>
-        <section className="w-5/12 flex pr-6">
-          <table className="w-full text-md ">
-            <thead>
-              <tr className="border-b-2 border-neutral-300 ">
-                <th className="py-4">Categoría</th>
-                <th>Monto Recaudado</th>
-                <th>Unidades Vendidas</th>
+        <section className="w-9/12 md:w-8/12 flex justify-center ">
+          <table className="w-full text-md">
+            <thead className="bg-neutral-200">
+              <tr className="border-b-2 border-neutral-300">
+                <th className="text-green-800 font-medium text-md py-4 pl-1">
+                  Producto
+                </th>
+                <th className="text-green-800 font-medium text-md py-2 pl-1">
+                  Monto Recaudado
+                </th>
+                <th className="text-green-800 font-medium text-md py-2 pl-1">
+                  Unidades Vendidas
+                </th>
               </tr>
             </thead>
             <tbody>
-              {products?.length > 0 ? (
-                products.map((product, index) => {
-                  return (
-                    <tr key={index} className="border-b-2 border-neutral-300">
-                      <td className="py-1 pr-1 capitalize font-medium">
-                        {product.name}
-                      </td>
-                      <td>₲ {product.totalRevenue.toLocaleString("es-ES")}</td>
-                      <td>{product.totalQuantity.toLocaleString("es-ES")}</td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan={3}>No hay datos disponibles</td>
+              {products.map((p, i) => (
+                <tr
+                  key={i}
+                  className="border-b-2 border-neutral-300 hover:bg-neutral-200 transition "
+                >
+                  <td className="capitalize font-medium pl-1 py-1">{p.name}</td>
+                  <td>
+                    {p.totalRevenue.toLocaleString("es-PY", {
+                      style: "currency",
+                      currency: "PYG",
+                    })}
+                  </td>
+                  <td>{p.totalQuantity.toLocaleString("es-PY")}</td>
                 </tr>
-              )}
+              ))}
             </tbody>
-            <tfoot>
+            <tfoot className="bg-neutral-200">
               <tr className="font-medium">
-                <td className=" py-4">Total</td>
-                <td>
-                  ₲{" "}
-                  {products?.reduce(
-                    (sum, product) => sum + product.totalRevenue,
-                    0
-                  ).toLocaleString("es-ES")}
+                <td className="text-green-800 pl-1 py-3">Total</td>
+                <td className="text-green-800">
+                  {products
+                    .reduce((sum, p) => sum + p.totalRevenue, 0)
+                    .toLocaleString("es-PY", {
+                      style: "currency",
+                      currency: "PYG",
+                    })}
+                </td>
+                <td className="text-green-800">
+                  {products
+                    .reduce((sum, p) => sum + p.totalQuantity, 0)
+                    .toLocaleString("es-PY")}
                 </td>
               </tr>
             </tfoot>
@@ -109,7 +134,59 @@ export default function ProductReport({
 
   const renderLineChart = () =>
     productsWeekly?.datasets?.length > 0 && (
-      <div className="w-full">
+      <div className="mt-6">
+        <section className="w-full flex  mt-4">
+          <table className="w-full text-md">
+            <thead className="bg-neutral-200">
+              <tr className="border-b-2 border-neutral-300">
+                <th className="text-green-800 font-medium text-md py-4 pl-1">
+                  Periodo
+                </th>
+                {productsWeekly.datasets.map((p, i) => (
+                  <th
+                    key={i}
+                    className="text-green-800 font-medium text-md py-2 pl-1"
+                  >
+                    {p.name}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {productsWeekly.labels.map((label, i) => (
+                <tr
+                  key={i}
+                  className="border-b-2 border-neutral-300 hover:bg-neutral-200 transition"
+                >
+                  <td className="capitalize font-medium pl-1 py-2">{label}</td>
+                  {productsWeekly.datasets.map((ds, j) => (
+                    <td key={j}>
+                      {ds.data[i].toLocaleString("es-PY", {
+                        style: "currency",
+                        currency: "PYG",
+                      })}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+            <tfoot className="bg-neutral-200">
+              <tr className="font-medium">
+                <td className="text-green-800 pl-1 py-3">Total</td>
+                {productsWeekly.datasets.map((ds, i) => (
+                  <td key={i} className="text-green-800">
+                    {ds.data
+                      .reduce((sum, val) => sum + val, 0)
+                      .toLocaleString("es-PY", {
+                        style: "currency",
+                        currency: "PYG",
+                      })}
+                  </td>
+                ))}
+              </tr>
+            </tfoot>
+          </table>
+        </section>
         <section className="w-full">
           <Line
             data={{
@@ -138,53 +215,11 @@ export default function ProductReport({
             }}
           />
         </section>
-        <section className="w-full flex px-6">
-          <table className="w-full text-md ">
-            <thead>
-              <tr className="border-b-2 border-neutral-300 ">
-                <th className="py-4">Periodo</th>
-                {productsWeekly?.datasets?.map((p) => (
-                  <th>{p.name}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {productsWeekly?.datasets?.length > 0 ? (
-                productsWeekly?.labels?.map((label, index) => (
-                  <tr key={index} className="border-b-2 border-neutral-300">
-                    <td className="py-1 pr-1 capitalize font-medium">
-                      {label}
-                    </td>
-                    {productsWeekly.datasets.map((ds, dsIndex) => (
-                      <td key={dsIndex} className="py-1 pr-1 ">
-                        ₲ {ds.data[index].toLocaleString("es-ES")}
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={3}>No hay datos disponibles</td>
-                </tr>
-              )}
-            </tbody>
-            <tfoot>
-              <tr className="font-medium">
-                <td className="py-4">Total</td>
-                {productsWeekly.datasets.map((ds, index) => (
-                  <td key={index}>
-                    ₲ {ds.data.reduce((sum, val) => sum + val, 0).toLocaleString("es-ES")}
-                  </td>
-                ))}
-              </tr>
-            </tfoot>
-          </table>
-        </section>
       </div>
     );
 
   return (
-    <div className="mt-4">
+    <div>
       {productMode === "Semanal" ? (
         renderLineChart()
       ) : (

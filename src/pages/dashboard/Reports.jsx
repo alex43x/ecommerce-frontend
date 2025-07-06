@@ -21,6 +21,7 @@ import PaymentMethodReport from "../../components/dashboard/reports/PaymentMetho
 import CategoryReport from "../../components/dashboard/reports/CategoryReport";
 import SellerReport from "../../components/dashboard/reports/SellerReport";
 import ProductReport from "../../components/dashboard/reports/ProductReport";
+import CashClosingReport from "../../components/dashboard/reports/CashClosingReport";
 
 import actualizar from "../../images/actualizar.png";
 ChartJS.register(
@@ -159,6 +160,9 @@ export default function Reports() {
 
   return (
     <div>
+      {/* Cierre de caja */}
+      <CashClosingReport />
+
       {/* Ventas por día */}
       <WeeklyReport
         daily={daily}
@@ -193,7 +197,7 @@ export default function Reports() {
 
       {/* Productos seleccionados */}
       <div className="flex gap-2 my-2 items-center">
-        <h3 className="text-3xl text-green-800 font-semibold mb-2">
+        <h3 className="text-3xl text-green-800  mb-2">
           Productos - <span>{productMode}</span>
         </h3>
         <button
@@ -209,12 +213,12 @@ export default function Reports() {
           <img className="w-4 object-contain" src={actualizar} alt="" />
         </button>
       </div>
-      
-        <ProductVariantSelector
-          selectedVariants={selectedVariants}
-          setSelectedVariants={setSelectedVariants}
-        />
-      
+
+      <ProductVariantSelector
+        selectedVariants={selectedVariants}
+        setSelectedVariants={setSelectedVariants}
+      />
+
       <ProductReport
         products={products}
         productsWeekly={productsWeekly}
@@ -222,6 +226,7 @@ export default function Reports() {
         setProductDateRange={setProductDateRange}
         productMode={productMode}
       ></ProductReport>
+      <div className="h-48"></div>
     </div>
   );
 }
