@@ -44,10 +44,11 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (userData, token) => {
     localStorage.setItem("AuthToken", token);
+    console.log(token)
     const decoded = jwtDecode(token);
-    setUser(decoded);
+    setUser(userData.data.user);
     setAutenticated(true);
-
+    console.log(decoded)
     try {
       // Verificar si el usuario está activo
       if (decoded.active === "disable") {
@@ -55,7 +56,8 @@ export const AuthProvider = ({ children }) => {
       }
 
       // Navegar según el rol del usuario
-      if (decoded.role === "admin") {
+      console.log(decoded.role,user)
+      if (decoded.role === "admin" || decoded.role === "spadmin") {
         navigate("/dashboard");
       } else {
         navigate("/pos");

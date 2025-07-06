@@ -18,7 +18,7 @@ export const UserProvider = ({ children }) => {
       });
       const data = await res.json();
       console.log(data)
-      setUsers(data);
+      setUsers(data.data);
     } catch (e) {
       console.error(e);
       throw e;

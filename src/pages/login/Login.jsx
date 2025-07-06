@@ -30,8 +30,9 @@ function Login() {
         }
       );
       const data = await response.json();
+      console.log(data.token)
       if (response.ok) {
-        login(data, data.token);
+        login(data, data.data.token);
       } else {
         setError({ ...error, other: data.message });
       }
@@ -58,7 +59,7 @@ function Login() {
           <label className="inline-block w-full my-2">
             <input
               type="email"
-              className="bg-white inline-block w-full px-3"
+              className="bg-white inline-block w-full px-3 py-1"
               placeholder="Correo Electrónico"
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -70,7 +71,7 @@ function Login() {
           <label className="block">
             <input
               type="password"
-              className="my-2 inline-block w-full px-3"
+              className="my-2 inline-block w-full px-3 py-1"
               placeholder="Contraseña"
               onChange={(e) => {
                 setPassword(e.target.value);
