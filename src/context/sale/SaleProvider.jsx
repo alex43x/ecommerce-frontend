@@ -58,8 +58,8 @@ export const SaleProvider = ({ children }) => {
       if (!res.ok) {
         throw new Error(data.message || "Error al obtener ventas");
       }
-
-      setSales(data.sales);
+      console.log(data)
+      setSales(data.data);
       setPage(data.currentPage);
       setTotalPages(data.totalPages);
       setFetched(true);
@@ -169,7 +169,7 @@ export const SaleProvider = ({ children }) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ newSale }),
+          body: JSON.stringify( newSale ),
         }
       );
 
