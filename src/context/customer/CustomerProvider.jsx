@@ -3,6 +3,7 @@ import Swal from "sweetalert2";
 import { CustomerContext } from "./CustomerContext";
 
 export const CustomerProvider = ({ children }) => {
+  const [customer, setCustomer] = useState({});
   const [customers, setCustomers] = useState([]);
   const [customerDetail, setCustomerDetail] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
@@ -210,7 +211,45 @@ export const CustomerProvider = ({ children }) => {
       return [];
     }
   };
+  const searchCustomerByRuc = async (ruc) => {
+    try {
+      // Hacer la petición al endpoint
+      const response = await fetch(
+        `https://turuc.com.py/api/contribuyente?ruc=${ruc}`
+      );
 
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log(result)
+      // Verificar si la respuesta tiene datos válidos
+      if (result.data && result.data.ruc) {
+        // Mapear los datos al formato que necesitas
+        const customerData = {
+          doc: result.data.doc,
+          razonSocial: result.data.razonSocial,
+          dv: result.data.dv,
+          ruc: result.data.ruc,
+          estado: result.data.estado,
+          esPersonaJuridica: result.data.esPersonaJuridica,
+          esEntidadPublica: result.data.esEntidadPublica,
+        };
+
+        // Guardar en el estado (asumiendo que tienes un setCustomer)
+        setCustomer(customerData);
+        return [customerData];
+      } else {
+        throw new Error("No se encontraron datos válidos en la respuesta");
+      }
+    } catch (error) {
+      console.error("Error buscando contribuyente:", error);
+      // Limpiar el estado en caso de error
+      setCustomer(null);
+      throw error; // Puedes manejar este error donde llames a la función
+    }
+  };
   // 🔸 Limpiar resultados de búsqueda
   const clearSearchResults = () => {
     setSearchResults([]);
@@ -232,6 +271,7 @@ export const CustomerProvider = ({ children }) => {
         searchCustomers,
         clearSearchResults,
         setCustomerDetail,
+        searchCustomerByRuc
       }}
     >
       {children}
