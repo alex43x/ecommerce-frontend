@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { ProductContext } from "./ProductContext";
 export const ProductProvider = ({ children }) => {
   const [productsByCategory, setProductsByCategory] = useState({});
+  const [totalPagesByCategory, setTotalPagesByCategory] = useState({});
   const [product, setProduct] = useState(null);
+  const [totalPages, setTotalPages] = useState(1);
   const [categories, setCategories] = useState([]);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [fetchedCategories, setFetchedCategories] = useState(false);
   const [lastFetchParams, setLastFetchParams] = useState({});
@@ -19,37 +20,39 @@ export const ProductProvider = ({ children }) => {
     sortBy = "dateDesc",
     forceRefresh = false,
   }) => {
+    const cacheKey = `${category}-${search}-${sortBy}`;
     const currentParams = { page, limit, category, search, sortBy };
-    console.log(currentParams);
+
+    // Verificación de caché más inteligente
     if (
       !forceRefresh &&
-      lastFetchParams[category] &&
+      lastFetchParams[cacheKey] &&
+      lastFetchParams[cacheKey].page === page &&
       JSON.stringify(currentParams) ===
-        JSON.stringify(lastFetchParams[category])
+        JSON.stringify(lastFetchParams[cacheKey])
     ) {
-      console.log("a", forceRefresh);
       return {
-        products: productsByCategory[category] || [],
-        totalPages,
+        products: productsByCategory[cacheKey] || [],
+        totalPages: totalPagesByCategory[cacheKey] || 1,
         currentPage: page,
       };
     }
 
     setLoading(true);
 
-    const queryParams = {
-      page,
-      limit,
-      ...(category && { category }),
-      ...(search && { search }),
-      ...(sortBy && { sortBy }),
-    };
-
-    const params = new URLSearchParams(queryParams);
-
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/products?${params.toString()}`,
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+        ...(category && { category }),
+        ...(search && { search }),
+        ...(sortBy && { sortBy }),
+      });
+
+      const response = await fetch(
+        `${
+          import.meta.env.VITE_API_URL
+        }/api/products?${queryParams.toString()}`,
         {
           method: "GET",
           headers: {
@@ -58,30 +61,46 @@ export const ProductProvider = ({ children }) => {
           },
         }
       );
-      const data = await res.json();
-      console.log(data);
 
-      setProductsByCategory((prev) => ({
-        ...prev,
-        [category]: data.products,
-      }));
-      setPage(data.currentPage);
-      setTotalPages(data.totalPages);
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
 
+      const data = await response.json();
+
+      // Create new objects for state updates
+      const newProductsByCategory = {
+        ...productsByCategory,
+        [cacheKey]: data.data || data.products || [],
+      };
+      console.log(data.totalPages);
+      setTotalPagesByCategory((prev) => {
+        const newState = {
+          ...prev,
+          [cacheKey]: data.totalPages || 1,
+        };
+        console.log("Actualizando totalPages:", newState); // Para depuración
+        return newState;
+      });
+
+      // Batch state updates
+      setProductsByCategory(newProductsByCategory);
+
+      setPage(data.currentPage || page);
       setLastFetchParams((prev) => ({
         ...prev,
-        [category]: currentParams,
+        [cacheKey]: currentParams,
       }));
 
-      // ✅ Este return permite usar los productos en componentes como Foods
+      // Return the data we just received, not from state
       return {
-        products: data.products,
-        totalPages: data.totalPages,
-        currentPage: data.currentPage,
+        products: data.data || data.products || [],
+        totalPages: data.totalPages || 1,
+        currentPage: data.currentPage || page,
       };
-    } catch (e) {
-      console.error(e);
-      throw e;
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -262,7 +281,7 @@ export const ProductProvider = ({ children }) => {
         }
       );
       const data = await res.json();
-      setCategories(data);
+      setCategories(data.data);
     } catch (e) {
       console.error(e);
       throw e;
@@ -350,6 +369,7 @@ export const ProductProvider = ({ children }) => {
     <ProductContext.Provider
       value={{
         productsByCategory,
+        totalPagesByCategory,
         product,
         categories,
         page,
