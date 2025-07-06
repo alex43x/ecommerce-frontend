@@ -34,12 +34,13 @@ export default function Sales() {
     { label: "Efectivo", value: "cash" },
     { label: "Tarjeta", value: "card" },
     { label: "QR", value: "qr" },
+    { label: "Transferencia", value: "transfer" },
   ];
   const userOptions = [
     { label: "Todos", value: "" },
     ...users.map((user) => ({
       label: user.name,
-      value: user.name,
+      value: user._id,
     })),
   ];
 
@@ -63,7 +64,7 @@ export default function Sales() {
   useEffect(() => {
     getSales({
       page,
-      limit: 15,
+      limit: 30,
       status,
       startDate: startDate || null,
       endDate: endDate || null,
@@ -101,41 +102,40 @@ export default function Sales() {
   };
 
   const tabClasses = (tab) =>
-    `px-4 py-2 rounded-md text-sm transition-colors flex items-center justify-center gap-1 ${
-      status === tab
-        ? "bg-green-700 text-white"
-        : "bg-gray-200 hover:bg-gray-300 border border-green-700 text-green-800"
+    `px-4 py-2 rounded-md  transition-colors flex items-center justify-center gap-1 border border-green-800 text-green-800 ${
+      status === tab ? "bg-green-300 " : "bg-green-100 hover:bg-green-200  "
     }`;
 
   const statusMap = {
     all: { label: "Todos", icon: todo },
     completed: { label: "Completado", icon: listo },
+    ordered: { label: "Pedido", icon: pendiente },
     pending: { label: "Pendiente", icon: pendiente },
     canceled: { label: "Cancelado", icon: cancelado },
+    annulled: { label: "Anulado", icon: cancelado },
   };
 
   return (
     <div>
       {/* Filtros por estado */}
-      <section className="flex gap-2 mb-4 ">
+      <section className="flex flex-wrap gap-2 mb-4 ">
         {Object.entries(statusMap).map(([key, { label, icon }]) => (
           <button
             className={tabClasses(key)}
             key={key}
             onClick={() => setStatus(key)}
           >
-            {status !== key && (
-              <img src={icon} alt={label} className="w-4 h-4" />
-            )}
+            <img src={icon} alt={label} className="w-4 h-4" />
+
             {label}
           </button>
         ))}
       </section>
 
       {/* Filtros adicionales */}
-      <section className="flex flex-wrap gap-1 font-medium my-2">
+      <section className="flex flex-wrap gap-3  my-2">
         <div>
-          <label>RUC: </label>
+          <label className="text-green-800">RUC: </label>
           <input
             type="text"
             value={ruc}
@@ -144,8 +144,8 @@ export default function Sales() {
             onChange={(e) => setRuc(e.target.value)}
           />
         </div>
-        <div className="ml-2">
-          <label>Producto: </label>
+        <div className="">
+          <label className="text-green-800">Producto: </label>
           <input
             type="text"
             value={product}
@@ -154,8 +154,8 @@ export default function Sales() {
             onChange={(e) => setProduct(e.target.value)}
           />
         </div>
-        <div className="ml-2">
-          <label>Vendedor: </label>
+        <div className="ml-2 flex items-center gap-2">
+          <label className="text-green-800">Vendedor: </label>
           <Dropdown
             items={userOptions}
             selected={userOptions.find((opt) => opt.value === user)}
@@ -163,8 +163,8 @@ export default function Sales() {
             placeholder="Por Vendedor"
           />
         </div>
-        <div className="ml-2">
-          <label>Método de Pago: </label>
+        <div className="ml-2 flex items-center gap-2">
+          <label className="text-green-800">Método de Pago: </label>
           <Dropdown
             items={paymentOptions}
             selected={paymentOptions.find((opt) => opt.value === paymentMethod)}
@@ -172,19 +172,17 @@ export default function Sales() {
             placeholder="Por Método de Pago"
           />
         </div>
-      </section>
-      <section className="flex flex-wrap gap-1 font-medium">
-        <div>
-          <label>Desde: </label>
+
+        <div className=" flex flex-wrap items-center gap-2">
+          <label className="text-green-800">Desde: </label>
           <input
             type="date"
             className="px-2 py-1"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
           />
-        </div>
-        <div>
-          <label>Hasta: </label>
+       
+          <label className="text-green-800">Hasta: </label>
           <input
             type="date"
             className="px-2 py-1"
@@ -202,10 +200,10 @@ export default function Sales() {
           <RecentSales
             sales={sales}
             onCancel={(saleId) => {
-              updateSaleStatus(saleId, "canceled");
+              updateSaleStatus(saleId, "annulled");
               getSales({
                 page,
-                limit: 15,
+                limit: 30,
                 status,
                 startDate: startDate || null,
                 endDate: endDate || null,
@@ -221,6 +219,7 @@ export default function Sales() {
       </section>
 
       {/* Paginación */}
+      
       <section className="flex items-center gap-4 mt-6">
         <button onClick={() => handlePageChange(page - 1)} disabled={page <= 1}>
           ← Anterior
