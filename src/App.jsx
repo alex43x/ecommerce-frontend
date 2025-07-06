@@ -24,21 +24,23 @@ function App() {
       <Route path="/unauthorized" element={<Unauthorized />} />
 
       {/* Rutas para Admin */}
-      <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+      <Route element={<ProtectedRoute allowedRoles={["admin","spadmin"]} />}>
         <Route path="/" element={<DashboardLayout />}>
           <Route
             path="/dashboard"
             element={
-              <UserProvider>
-                <SaleProvider>
-                  <ProductProvider>
-                    <ReportProvider>
-                      {" "}
-                      <Dashboard />
-                    </ReportProvider>
-                  </ProductProvider>
-                </SaleProvider>
-              </UserProvider>
+              <CustomerProvider>
+                <UserProvider>
+                  <SaleProvider>
+                    <ProductProvider>
+                      <ReportProvider>
+                        {" "}
+                        <Dashboard />
+                      </ReportProvider>
+                    </ProductProvider>
+                  </SaleProvider>
+                </UserProvider>
+              </CustomerProvider>
             }
           />
           <Route
@@ -52,7 +54,7 @@ function App() {
         </Route>
       </Route>
       {/* Rutas para Admin y Users */}
-      <Route element={<ProtectedRoute allowedRoles={["admin", "cashier"]} />}>
+      <Route element={<ProtectedRoute allowedRoles={["admin", "cashier","spadmin"]} />}>
         <Route
           path="/pos"
           element={

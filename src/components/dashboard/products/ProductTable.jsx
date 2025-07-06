@@ -14,16 +14,19 @@ export default function ProductTable({
 }) {
   return (
     <table>
-      <thead>
+      <thead className="sticky top-0 bg-neutral-200 z-10">
         <tr className="border-b-2 border-neutral-300">
-          <th>Producto</th>
-          <th>Categorías</th>
-          <th>Variantes</th>
-          <th>URL</th>
-          <th>Fecha de Registro</th>
-          <th>Opciones</th>
+          <th className="text-green-800 font-medium text-md pl-2 py-2">
+            Producto
+          </th>
+          <th className="text-green-800 font-medium text-md">Categorías</th>
+          <th className="text-green-800 font-medium text-md">Variantes</th>
+          <th className="text-green-800 font-medium text-md">Registro</th>
+          <th className="text-green-800 font-medium text-md pl-2">URL</th>
+          <th className="text-green-800 font-medium text-md">Opciones</th>
         </tr>
       </thead>
+
       <tbody>
         {loading ? (
           <tr>

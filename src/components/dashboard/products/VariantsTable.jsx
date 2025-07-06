@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import eliminar from "../../../images/eliminar.png";
+import eliminar from "../../../images/error.png";
 import anadir from "../../../images/anadir.png";
 export default function VariantsTable({ variants, onEdit, editing = false }) {
   const [editData, setEditData] = useState([]);
@@ -46,8 +46,8 @@ export default function VariantsTable({ variants, onEdit, editing = false }) {
 
   return (
     <div className="mb-2 overflow-x-auto">
-      <table className="min-w-[210px] text-sm border border-gray-200 table-fixed">
-        <thead className="bg-gray-100">
+      <table className="min-w-[210px] text-sm  table-fixed">
+        <thead >
           <tr>
             <th className="w-[60px] px-1 text-left">Código</th>
             <th className="w-[30px] px-1 text-left">Abrev.</th>
@@ -58,8 +58,8 @@ export default function VariantsTable({ variants, onEdit, editing = false }) {
         </thead>
         <tbody>
           {editData.map((variant, index) => (
-            <tr key={index} className="border-t border-gray-100">
-              <td className="w-[60px] p-1">
+            <tr key={index} >
+              <td className="w-[70px] p-1">
                 {editing ? (
                   <input
                     type="text"
@@ -73,7 +73,7 @@ export default function VariantsTable({ variants, onEdit, editing = false }) {
                   <span className="text-sm">{variant.barcode}</span>
                 )}
               </td>
-              <td className="w-[30px] p-1">
+              <td className="w-[20px] p-1">
                 {editing ? (
                   <input
                     type="text"
@@ -84,8 +84,8 @@ export default function VariantsTable({ variants, onEdit, editing = false }) {
                     }
                   />
                 ) : (
-                  <div className="  px-1 rounded-md bg-green-200">
-                    <p className="text-sm text-center text-green-950 font-medium">
+                  <div className="  p-1 rounded-md bg-green-200 border border-green-800">
+                    <p className="text-sm text-center text-green-800 font-medium ">
                       {variant.abreviation}
                     </p>
                   </div>
@@ -102,31 +102,32 @@ export default function VariantsTable({ variants, onEdit, editing = false }) {
                     }
                   />
                 ) : (
-                  <span className="text-sm">{variant.variantName}</span>
+                  <span className="text-sm font-medium">{variant.variantName}</span>
                 )}
               </td>
               <td className="w-[90px] p-1">
                 {editing ? (
                   <input
                     type="number"
-                    className="p-1 border rounded w-full text-sm"
+                    className="p-1 border rounded w-full text-sm border-neutral-400"
                     value={variant.price || ""}
                     onChange={(e) =>
                       handleChange(index, "price", Number(e.target.value))
                     }
                   />
                 ) : (
-                  <span className="text-sm">₲{variant.price}</span>
+                  <span className="text-sm">{variant.price.toLocaleString("es-PY", { style: "currency", currency: "PYG" })}</span>
                 )}
               </td>
               {editing && (
-                <td className="w-[75px] p-1 text-center">
+                <td className="w-[240px] p-1 text-center">
                   <button
-                    className="text-red-500 hover:text-red-700 text-sm"
+                    className="bg-red-100 text-sm border border-red-800 p-1 text-red-800 w-fit flex gap-1"
                     onClick={() => removeVariant(index)}
                     title="Eliminar"
                   >
-                    <img className="w-10 object-contain" src={eliminar} alt="" />
+                    <p>Borrar</p>
+                    <img className="w-4 object-contain" src={eliminar} alt="" />
                   </button>
                 </td>
               )}
@@ -140,7 +141,7 @@ export default function VariantsTable({ variants, onEdit, editing = false }) {
       {editing && (
         <button
           onClick={addVariant}
-          className="bg-green-200 text-green-950 text-xs rounded px-2 py-2 flex items-center  justify-center gap-1 w-full"
+          className="bg-green-200 text-green-800 text-md rounded-lg p-1 mt-1 flex items-center  justify-center gap-1 w-full border border-green-800"
         >
           <span>Agregar Variante</span>
           <img className="w-5 h-5 object-contain" src={anadir} alt="" />

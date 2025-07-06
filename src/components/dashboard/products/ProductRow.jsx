@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import VariantsTable from "./VariantsTable"; // Asegúrate que esté el path correcto
-import eliminar from "../../../images/eliminar.png";
+
+import eliminar from "../../../images/error.png";
 import guardar from "../../../images/guardar.png";
 import editar from "../../../images/editar.png";
 import Swal from "sweetalert2";
@@ -107,8 +108,8 @@ export default function ProductRow({
   };
 
   return (
-    <tr className="border-b-2 border-neutral-300">
-      <td className="pr-2 pt-1 align-top">
+    <tr className="border-b-2 border-neutral-300 hover:bg-neutral-200 transition">
+      <td className="px-2 pt-1 align-top">
         <div className="w-[120px] break-words">
           {isEditing ? (
             <input
@@ -121,13 +122,12 @@ export default function ProductRow({
             />
           ) : (
             <p className="font-medium">{product.name}</p>
-            
           )}
         </div>
       </td>
 
       <td className="align-top">
-        <div className="w-[170px] flex flex-wrap gap-2">
+        <div className="min-w-[125px] flex flex-wrap gap-2">
           {isEditing ? (
             categories.map((cat) => (
               <label key={cat._id} className="flex items-center gap-1 text-xs">
@@ -145,8 +145,7 @@ export default function ProductRow({
               {product.category.map((cat) => (
                 <div
                   key={cat}
-                  className=" mt-1 mr-1 p-1 rounded-lg bg-white"
-                  style={{ border: "2px solid #e0e0e0" }}
+                  className=" mt-1 mr-1 py-1 px-2 rounded-lg bg-green-200 border-[1.5px] border-green-800 text-green-800 font-medium"
                 >
                   <p>{cat}</p>
                 </div>
@@ -169,13 +168,18 @@ export default function ProductRow({
         </div>
       </td>
 
+      <td className="py-2 align-top">
+        <div className="min-w-[90px]">
+          {new Date(product.createdAt).toLocaleDateString()}
+        </div>
+      </td>
       <td className="p-2 align-top">
-        <div className="min-w-[150px] break-all">
+        <div className="min-w-[110px] break-all overflow-auto h-20">
           {isEditing ? (
             <input
               type="text"
               name="imageURL"
-              className="w-full border rounded p-1"
+              className=" border rounded p-1 w-full "
               value={editForm.imageURL}
               onChange={handleChange}
             />
@@ -186,35 +190,31 @@ export default function ProductRow({
       </td>
 
       <td className="py-2 align-top">
-        <div className="min-w-[100px]">
-          {new Date(product.createdAt).toLocaleDateString()}
-        </div>
-      </td>
-
-      <td className="py-2 align-top">
-        <div className="w-[90px] flex flex-col gap-1">
-          {error && <p className="text-red-600 text-xs">{error}</p>}
+        <div className="w-[100px] flex flex-col gap-1">
           {isEditing ? (
             <div className="flex flex-col gap-1">
               <button
                 onClick={handleSave}
-                className="bg-green-200 text-green-950 text-xs rounded px-2 py-1 flex items-center justify-between gap-1"
+                className="bg-green-200 text-green-800 text-md rounded px-2 py-1 flex items-center gap-1 w-fit border border-green-800 hover:bg-green-300"
               >
                 <p>Guardar</p>
                 <img className="w-4 h-4 object-contain" src={guardar} alt="" />
               </button>
               <button
-                onClick={()=>{setEditProductId(null)}}
-                className="bg-green-200 text-green-950 text-xs rounded px-2 py-1 flex items-center gap-1"
+                onClick={() => {
+                  setEditProductId(null);
+                  setError();
+                }}
+                className="bg-red-100 text-red-800 text-md rounded px-2 py-1 flex items-center gap-1 w-fit border border-red-800 hover:bg-red-300"
               >
                 <span>Cancelar</span>
                 <img className="w-4 h-4 object-contain" src={eliminar} alt="" />
               </button>
             </div>
           ) : (
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-2">
               <button
-                className="bg-green-200 text-green-950 text-xs rounded px-2 py-1 flex items-center gap-1"
+                className="bg-green-200 text-green-800 text-md rounded px-2 py-1 flex items-center gap-1 w-fit border border-green-800 hover:bg-green-300"
                 onClick={() => {
                   setEditProductId(product._id);
                   setEditForm({
@@ -231,13 +231,14 @@ export default function ProductRow({
               </button>
               <button
                 onClick={handleDelete}
-                className="bg-green-200 text-green-950 text-xs rounded px-2 py-1 flex items-center gap-1"
+                className="bg-red-200 text-red-800 text-md rounded px-2 py-1 flex items-center gap-1 w-fit border border-red-800 hover:bg-red-300"
               >
                 <span>Eliminar</span>
                 <img className="w-4 h-4 object-contain" src={eliminar} alt="" />
               </button>
             </div>
           )}
+          {error && <p className="text-red-600 text-xs">{error}</p>}
         </div>
       </td>
     </tr>
