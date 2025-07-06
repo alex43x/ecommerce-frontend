@@ -27,7 +27,9 @@ export default function Foods({ categories }) {
   const totalPages = totalPagesByLocal[category] || 1;
   const limit = 27;
 
-  const foods = productsByCategory[category];
+  // Generamos la cacheKey igual que en el provider
+  const cacheKey = `${category}-${searchInput}-dateDesc`;
+  const foods = productsByCategory[cacheKey] || [];
 
   const fetchProducts = async ({ page, search }) => {
     const res = await getProducts({
@@ -35,9 +37,9 @@ export default function Foods({ categories }) {
       limit,
       category,
       search,
+      sortBy: "dateDesc", // Añadimos sortBy para coincidir con el provider
     });
-
-    // si `getProducts` devuelve directamente `res.data`:
+    
     if (res?.totalPages) {
       setTotalPagesByLocal((prev) => ({
         ...prev,
@@ -60,6 +62,7 @@ export default function Foods({ categories }) {
     return delayedSearch.cancel;
   }, [searchInput]);
 
+  // Resto del componente permanece igual...
   useEffect(() => {
     if (!triggeredByScan) return;
 

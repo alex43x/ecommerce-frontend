@@ -91,7 +91,7 @@ export default function POS() {
             <img className="w-4 object-contain" src={usuario} alt="" />
             <p> {user.name} </p>
           </div>
-          {user.role === "admin" && (
+          {user.role === "admin"|| user.role==="spadmin" && (
             <button
               className="flex rounded bg-green-200 font-medium mb-2 pl-2 py-1 border border-green-800 gap-2  items-center"
               onClick={() => nav("/Dashboard")}

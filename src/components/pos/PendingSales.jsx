@@ -67,6 +67,8 @@ export default function PendingSales() {
         limit: 20,
         status: selectedStatus,
         forceRefresh: true,
+        startDate: today,
+        endDate: today,
       });
       Swal.fire({
         title: "Cancelado",
@@ -270,7 +272,11 @@ export default function PendingSales() {
           setConfirmOrder(false);
         }}
       >
-        <OrderDetail onExit={() => setConfirmOrder(false)} saleData={order} paymentMode="complete"/>
+        <OrderDetail
+          onExit={() => setConfirmOrder(false)}
+          saleData={order}
+          paymentMode="complete"
+        />
       </ProductFormModal>
     </div>
   );

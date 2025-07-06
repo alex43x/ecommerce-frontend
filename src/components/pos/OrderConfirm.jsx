@@ -4,7 +4,7 @@ import { useAuth } from "../../context/auth/AuthContext";
 import { useSale } from "../../context/sale/SaleContext";
 import { useCustomer } from "../../context/customer/CustomerContext";
 import Swal from "sweetalert2";
-import CustomerForm from "./NewCustomerForm"; // Asegúrate de que la ruta sea correcta
+import CustomerForm from "../dashboard/customers/NewCustomerForm"; // Asegúrate de que la ruta sea correcta
 
 // Importar imágenes
 import cerrarIcon from "../../images/eliminar.png";
@@ -44,7 +44,7 @@ export default function OrderDetail({
     useCart();
   const { user } = useAuth();
   const { createSale, getSales, updateSale } = useSale();
-  const { searchCustomers } = useCustomer();
+  const { searchCustomerByRuc } = useCustomer();
 
   const today = useMemo(() => new Date().toISOString().split("T")[0], []);
   const isPendingOrOrdered = useMemo(
@@ -225,37 +225,24 @@ export default function OrderDetail({
     console.log(ruc);
     if (!ruc) return;
     try {
-      const customers = await searchCustomers(ruc);
+      const customers = await searchCustomerByRuc(ruc);
+      console.log(customers)
       if (customers.length > 0) {
         const foundCustomer = customers[0];
-        setCustomerName(foundCustomer.name);
+        setCustomerName(foundCustomer.razonSocial);
         Swal.fire({
           title: "Cliente encontrado",
-          html: `Nombre: <b>${foundCustomer.name}</b><br>RUC: <b>${foundCustomer.ruc}</b>`,
+          html: `Nombre: <b>${foundCustomer.razonSocial}</b><br>RUC: <b>${foundCustomer.ruc}</b>`,
           icon: "success",
           confirmButtonColor: "#057c37",
         });
-      } else {
-        const { value: action } = await Swal.fire({
-          title: "Cliente no registrado",
-          text: "¿Qué desea hacer?",
-          icon: "question",
-          showCancelButton: true,
-          confirmButtonText: "Registrar nuevo cliente",
-          cancelButtonText: "Cancelar",
-          confirmButtonColor: "#057c37",
-        });
-
-        if (action) {
-          // SweetAlert2 devuelve true cuando se confirma
-          setShowCustomerForm(true);
-        }
-      }
+      } 
+      
     } catch (error) {
-      console.error("Error buscando cliente:", error);
+      console.error("No se pudo encontrar cliente:", error);
       Swal.fire({
-        title: "Error",
-        text: "No se pudo buscar el cliente",
+        title: "No se pudo encontrar cliente",
+        text: "Ruc no válido",
         icon: "error",
         confirmButtonColor: "#057c37",
       });
@@ -300,6 +287,7 @@ export default function OrderDetail({
       if (isPendingOrOrdered) {
         const updatedSale = {
           ...saleData,
+          user:saleData.user._id,
           payment: currentPayments,
           status: "completed",
           stage: "delivered",

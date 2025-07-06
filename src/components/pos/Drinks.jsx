@@ -19,9 +19,20 @@ export default function Drinks() {
   const [searchInput, setSearchInput] = useState("");
   const [barcode, setBarcode] = useState("");
   const [triggeredByScan, setTriggeredByScan] = useState(false);
+  
+  // Generamos la cacheKey igual que en el provider
+  const cacheKey = `${category}-${searchInput}-dateDesc`;
+  const drinks = productsByCategory[cacheKey] || [];
+
   useEffect(() => {
-    if (!productsByCategory[category]) {
-      getProducts({ page: 1, limit: 24, category, search: searchInput });
+    if (!drinks.length) {
+      getProducts({ 
+        page: 1, 
+        limit: 24, 
+        category, 
+        search: searchInput,
+        sortBy: "dateDesc" // Añadimos sortBy para coincidir con el provider
+      });
     }
   }, [category]);
 
@@ -30,7 +41,6 @@ export default function Drinks() {
 
     if (product && !product.message) {
       const variantObj = product.variants;
-
       const productFormatted = {
         ...product,
         variants: [variantObj],
@@ -62,28 +72,33 @@ export default function Drinks() {
     }
 
     setTriggeredByScan(false);
-    clearProduct(); // ✅ limpia producto
+    clearProduct();
   }, [product]);
 
   useEffect(() => {
     const delayedSearch = debounce(() => {
-      getProducts({ page: 1, limit: 24, category, search: searchInput });
+      getProducts({ 
+        page: 1, 
+        limit: 24, 
+        category, 
+        search: searchInput,
+        sortBy: "dateDesc" // Añadimos sortBy para coincidir con el provider
+      });
     }, 500);
 
     delayedSearch();
     return delayedSearch.cancel;
   }, [searchInput]);
 
-  const foods = productsByCategory[category];
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       getProductByBarcode(barcode);
-      setTriggeredByScan(true); // 👉 esta línea es crucial
+      setTriggeredByScan(true);
       setBarcode("");
     }
   };
 
-  if (!foods) return <p>Cargando productos...</p>;
+  if (!drinks) return <p>Cargando productos...</p>;
 
   return (
     <div>
@@ -110,7 +125,7 @@ export default function Drinks() {
       </section>
 
       <div className="grid grid-cols-2 gap-3 my-3">
-        {foods.map((product) => (
+        {drinks.map((product) => (
           <ProductContainer key={product._id} product={product} />
         ))}
       </div>
