@@ -19,25 +19,15 @@ export default function ConfigAdmin() {
   const [editUser, setEditUser] = useState(false);
   const [addUser, setAddUser] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [loading, setLoading] = useState(true);
 
   const { user } = useAuth();
-  const { users, getUsers } = useUser();
+  const { users, getUsers, page, totalPages, loading } = useUser();
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        await getUsers();
-      } catch (error) {
-        console.error("Error al cargar usuarios:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUsers();
+    getUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Función para traducir el rol
   const translateRole = (role) => {
     return ROLE_TRANSLATIONS[role] || role;
   };
@@ -76,58 +66,104 @@ export default function ConfigAdmin() {
               </tr>
             </thead>
             <tbody>
-              {users?.map((u) => (
-                <tr key={u._id} className="border-t border-neutral-200 bg-neutral-50 hover:bg-neutral-100">
-                  <td className="p-3">{u.name}</td>
-                  <td className="p-3">{translateRole(u.role)}</td>
-                  <td className="p-3">
-                    <span
-                      className={`px-3 py-1 rounded font-medium ${
-                        u.active === "enable"
-                          ? "bg-green-200 text-green-800 border border-green-800"
-                          : "bg-red-200 text-red-800 border border-red-800"
-                      }`}
-                    >
-                      {u.active === "enable" ? "Activo" : "Inactivo"}
-                    </span>
-                  </td>
-                  <td className="p-3">{u.email}</td>
-                  <td className="p-3">
-                    <button
-                      className={`flex items-center gap-2 px-3 py-1 rounded border transition-colors ${
-                        (u.role === "admin" && user.role === "admin") ||
-                        (u.role === "spadmin" && user.role === "admin")
-                          ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                          : "bg-green-200 text-green-800 border-green-800 hover:bg-green-300"
-                      }`}
-                      disabled={
-                        (u.role === "admin" && user.role === "admin") ||
-                        (u.role === "spadmin" && user.role === "admin")
-                      }
-                      onClick={() => {
-                        setSelectedUser(u);
-                        setEditUser(true);
-                      }}
-                      title={
-                        u.role === "admin" && user.role === "admin"
-                          ? "No puedes editar este administrador"
-                          : "Editar usuario"
-                      }
-                    >
-                      <span>Editar</span>
-                      <img
-                        className="w-3 object-contain"
-                        src={editar}
-                        alt="Editar"
-                      />
-                    </button>
+              {users.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="p-4 text-center text-gray-500">
+                    No se encontraron usuarios.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                users.map((u) => (
+                  <tr
+                    key={u._id}
+                    className="border-t border-neutral-200 bg-neutral-50 hover:bg-neutral-100"
+                  >
+                    <td className="p-3">{u.name}</td>
+                    <td className="p-3">{translateRole(u.role)}</td>
+                    <td className="p-3">
+                      <span
+                        className={`px-3 py-1 rounded font-medium ${
+                          u.active === "enable"
+                            ? "bg-green-200 text-green-800 border border-green-800"
+                            : "bg-red-200 text-red-800 border border-red-800"
+                        }`}
+                      >
+                        {u.active === "enable" ? "Activo" : "Inactivo"}
+                      </span>
+                    </td>
+                    <td className="p-3">{u.email}</td>
+                    <td className="p-3">
+                      <button
+                        className={`flex items-center gap-2 px-3 py-1 rounded border transition-colors ${
+                          (u.role === "admin" && user.role === "admin") ||
+                          (u.role === "spadmin" && user.role === "admin")
+                            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                            : "bg-green-200 text-green-800 border-green-800 hover:bg-green-300"
+                        }`}
+                        disabled={
+                          (u.role === "admin" && user.role === "admin") ||
+                          (u.role === "spadmin" && user.role === "admin")
+                        }
+                        onClick={() => {
+                          setSelectedUser(u);
+                          setEditUser(true);
+                        }}
+                        title={
+                          u.role === "admin" && user.role === "admin"
+                            ? "No puedes editar este administrador"
+                            : "Editar usuario"
+                        }
+                      >
+                        <span>Editar</span>
+                        <img
+                          className="w-3 object-contain"
+                          src={editar}
+                          alt="Editar"
+                        />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         )}
       </div>
+
+      {/* Paginación */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center mt-4 gap-2 flex-wrap">
+          <button
+            disabled={page === 1}
+            onClick={() => getUsers(page - 1)}
+            className="px-3 py-1 rounded border border-green-800 text-green-800 bg-green-200 hover:bg-green-300 disabled:opacity-50"
+          >
+            Anterior
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+            <button
+              key={p}
+              onClick={() => getUsers(p)}
+              className={`px-3 py-1 rounded border ${
+                page === p
+                  ? "bg-green-200 text-green-800 border border-green-800"
+                  : "bg-white text-green-800 hover:bg-green-100"
+              }`}
+            >
+              {p}
+            </button>
+          ))}
+
+          <button
+            disabled={page === totalPages}
+            onClick={() => getUsers(page + 1)}
+            className="px-3 py-1 rounded border border-green-800 text-green-800 bg-green-200 hover:bg-green-300 disabled:opacity-50"
+          >
+            Siguiente
+          </button>
+        </div>
+      )}
 
       {/* Modales */}
       {editUser && (

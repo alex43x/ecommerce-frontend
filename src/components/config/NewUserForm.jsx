@@ -90,12 +90,12 @@ export default function NewUserForm({ onExit = () => {} }) {
       </div>
       <div className="flex gap-2 mb-2 w-full">
         <div className="w-7/12 pr-2">
-          <section className="w-full flex gap-2 ">
+          <section className="w-full flex gap-2 items-center">
             <label className="font-medium">Nombre:</label>
             <input
               type="text"
               name="name"
-              className="w-full px-2 "
+              className="w-full px-2 py-1 border border-neutral-400"
               value={formData.name}
               onChange={(e) => handleChange(e.target.name, e.target.value)}
             />
@@ -103,12 +103,12 @@ export default function NewUserForm({ onExit = () => {} }) {
           {errors.name && <p style={{ color: "red" }}>{errors.name}</p>}
         </div>
         <div className="w-5/12">
-          <section className="w-full flex gap-2">
+          <section className="w-full flex gap-2 items-center">
             <label className=" font-medium">Email:</label>
             <input
               type="email"
               name="email"
-              className="w-full px-2"
+              className="w-full px-2 py-1 border border-neutral-400"
               value={formData.email}
               onChange={(e) => handleChange(e.target.name, e.target.value)}
             />
@@ -118,12 +118,12 @@ export default function NewUserForm({ onExit = () => {} }) {
       </div>
       <div className="flex mb-2 w-full mt-3">
         <div className="w-6/12 ">
-          <section className="w-full flex gap-1 ">
+          <section className="w-full flex gap-1 items-center">
             <label className="font-medium">Contraseña:</label>
             <input
               type="password"
               name="password"
-              className=" px-1"
+              className=" px-1 py-1 border border-neutral-400"
               value={formData.password}
               onChange={(e) => handleChange(e.target.name, e.target.value)}
             />
@@ -131,12 +131,12 @@ export default function NewUserForm({ onExit = () => {} }) {
           {errors.password && <p style={{ color: "red" }}>{errors.password}</p>}
         </div>
         <div className="w-7/12">
-          <section className="w-full flex gap-1">
-            <label className="font-medium">Confirmar contraseña:</label>
+          <section className="w-full flex gap-1 items-center">
+            <label className="font-medium ">Confirmar contraseña:</label>
             <input
               type="password"
               name="confirmPassword"
-              className="w-6/12 px-1"
+              className="w-6/12 px-1 py-1 border border-neutral-400"
               value={formData.confirmPassword}
               onChange={(e) => handleChange(e.target.name, e.target.value)}
             />
