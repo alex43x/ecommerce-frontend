@@ -53,9 +53,8 @@ export default function Products() {
   const loadProducts = useCallback(async () => {
     try {
       await getProducts({ ...filters, limit: 15 });
-    } catch (error) {
+    } catch {
       Swal.fire("Error","No se pudieron cargar los productos.","error")
-      console.error("Error loading products:", error);
     }
   }, [filters, getProducts]);
 
