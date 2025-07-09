@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useReport } from "../../../context/report/ReportContext";
 import actualizar from "../../../images/actualizar.png";
+import Swal from "sweetalert2";
 
 export default function CashClosingReport() {
   const { cashClosing, getCashClosingReport, loading } = useReport();
@@ -14,8 +15,8 @@ export default function CashClosingReport() {
     try {
       setLocalLoading(true);
       await getCashClosingReport({ day: selectedDate }, true);
-    } catch (error) {
-      console.error("Error al obtener el reporte:", error);
+    } catch  {
+      Swal.fire("Error al obtener cierre","Error","error")
     } finally {
       setLocalLoading(false);
     }
@@ -26,6 +27,7 @@ export default function CashClosingReport() {
       await handleRefresh();
     };
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]);
 
   useEffect(() => {

@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useReport } from "../../context/report/ReportContext";
+
+//componentes de Chart.js
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -13,17 +15,22 @@ import {
   PointElement,
 } from "chart.js";
 
+// Librería para manejo de fechas
 import dayjs from "dayjs";
 
+// Importación de componentes de reportes
 import ProductVariantSelector from "../../components/dashboard/reports/ProductVariantSelector";
-import WeeklyReport from "../../components/dashboard/reports/weeklyReport";
+import WeeklyReport from "../../components/dashboard/reports/WeeklyReport";
 import PaymentMethodReport from "../../components/dashboard/reports/PaymentMethodReport";
 import CategoryReport from "../../components/dashboard/reports/CategoryReport";
 import SellerReport from "../../components/dashboard/reports/SellerReport";
 import ProductReport from "../../components/dashboard/reports/ProductReport";
 import CashClosingReport from "../../components/dashboard/reports/CashClosingReport";
 
+// Imagen de botón actualizar
 import actualizar from "../../images/actualizar.png";
+
+// Registro de los componentes de Chart.js
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -54,9 +61,13 @@ export default function Reports() {
     seller,
   } = useReport();
 
+  // Estado para alternar entre los modos de visualización de productos
   const [productMode, setProductMode] = useState("Semanal");
+
+  // Variantes seleccionadas por el usuario
   const [selectedVariants, setSelectedVariants] = useState([]);
 
+  // Rango de fechas para cada tipo de reporte
   const [dailyDateRange, setDailyDateRange] = useState({
     start: dayjs().subtract(6, "day").format("YYYY-MM-DD"),
     end: dayjs().format("YYYY-MM-DD"),
@@ -82,14 +93,16 @@ export default function Reports() {
     end: dayjs().endOf("month").format("YYYY-MM-DD"),
   });
 
+  // Al montar el componente, se cargan los reportes principales
   useEffect(() => {
     handleDailyRefresh();
     handlePaymentRefresh();
     handleCategoryRefresh();
     handleSellerRefresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Fetch de ventas totales
+  // Efecto para obtener datos acumulados de productos según fechas y variantes seleccionadas
   useEffect(() => {
     const fetchSalesData = async () => {
       if (selectedVariants.length > 0) {
@@ -108,9 +121,10 @@ export default function Reports() {
       }
     };
     fetchSalesData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedVariants, productDateRange.start, productDateRange.end]);
 
-  // Fetch de ventas semanales
+  // Efecto para obtener ventas semanales de productos seleccionados
   useEffect(() => {
     const fetchWeeklySales = async () => {
       if (selectedVariants.length > 0) {
@@ -122,8 +136,10 @@ export default function Reports() {
       }
     };
     fetchWeeklySales();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedVariants]);
 
+  // Funciones para refrescar los reportes individuales
   const handleDailyRefresh = () => {
     getDailyReport({ startDate: dailyDateRange.start }, true);
   };
@@ -163,7 +179,7 @@ export default function Reports() {
       {/* Cierre de caja */}
       <CashClosingReport />
 
-      {/* Ventas por día */}
+      {/* Reporte de ventas por día */}
       <WeeklyReport
         daily={daily}
         dailyDateRange={dailyDateRange}
@@ -171,7 +187,7 @@ export default function Reports() {
         handleDailyRefresh={handleDailyRefresh}
       />
 
-      {/* Método de pago */}
+      {/* Reporte de métodos de pago */}
       <PaymentMethodReport
         payment={payment}
         paymentDateRange={paymentDateRange}
@@ -179,7 +195,7 @@ export default function Reports() {
         handlePaymentRefresh={handlePaymentRefresh}
       />
 
-      {/* Categorías */}
+      {/* Reporte por categorías */}
       <CategoryReport
         category={category}
         categoryDateRange={categoryDateRange}
@@ -187,7 +203,7 @@ export default function Reports() {
         handleCategoryRefresh={handleCategoryRefresh}
       />
 
-      {/* Vendedores */}
+      {/* Reporte por vendedores */}
       <SellerReport
         seller={seller}
         sellerDateRange={sellerDateRange}
@@ -195,7 +211,7 @@ export default function Reports() {
         handleSellerRefresh={handleSellerRefresh}
       />
 
-      {/* Productos seleccionados */}
+      {/* Título de sección y botón para alternar modo */}
       <div className="flex gap-2 my-2 items-center">
         <h3 className="text-3xl text-green-800  mb-2">
           Productos - <span>{productMode}</span>
@@ -214,11 +230,13 @@ export default function Reports() {
         </button>
       </div>
 
+      {/* Selector de variantes de productos */}
       <ProductVariantSelector
         selectedVariants={selectedVariants}
         setSelectedVariants={setSelectedVariants}
       />
 
+      {/* Reporte de productos */}
       <ProductReport
         products={products}
         productsWeekly={productsWeekly}
@@ -226,6 +244,8 @@ export default function Reports() {
         setProductDateRange={setProductDateRange}
         productMode={productMode}
       ></ProductReport>
+
+      {/* Espaciador final */}
       <div className="h-48"></div>
     </div>
   );

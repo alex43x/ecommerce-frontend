@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Bar, Line } from "react-chartjs-2";
 
 export default function ProductReport({
@@ -15,10 +15,6 @@ export default function ProductReport({
     "rgba(144, 238, 144, 0.6)",
     "rgba(0, 100, 0, 0.6)",
   ];
-
-  useEffect(() => {
-    console.log("weekly", productsWeekly);
-  }, [productsWeekly]);
 
   const renderDateInputs = () => (
     <div className="flex flex-wrap items-center mt-2 gap-2">

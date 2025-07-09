@@ -18,7 +18,7 @@ export default function ProductVariantSelector({
       if (debouncedSearchTerm) {
         const results = await searchProductVariants(debouncedSearchTerm);
         // filtrar los que ya están seleccionados
-        console.log(results)
+
         const filtered = results.data.filter(
           (variant) =>
             !selectedVariants.some((v) => v.variantId === variant.variantId)
