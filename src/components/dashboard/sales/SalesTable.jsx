@@ -152,7 +152,7 @@ export default function RecentSales({ sales = [], onCancel }) {
                     {statusLabels[sale.status]?.label || sale.status}
                   </p>
                 </td>
-                <td>{sale.user.name}</td>
+                <td>{sale.user?.name}</td>
                 <td>
                   {sale.status !== "annulled" && (
                     <button

@@ -46,6 +46,7 @@ export default function Sales() {
 
   useEffect(() => {
     getUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -74,6 +75,7 @@ export default function Sales() {
       product: debouncedProduct || null,
       forceRefresh: true,
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     status,
     startDate,
@@ -181,7 +183,7 @@ export default function Sales() {
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
           />
-       
+
           <label className="text-green-800">Hasta: </label>
           <input
             type="date"
@@ -219,15 +221,20 @@ export default function Sales() {
       </section>
 
       {/* Paginación */}
-      
-      <section className="flex items-center gap-4 mt-6">
-        <button onClick={() => handlePageChange(page - 1)} disabled={page <= 1}>
+
+      <section className="flex items-center justify-center gap-4 mt-6">
+        <button
+          className="bg-green-200 border border-green-800 text-green-800 px-2 py-1"
+          onClick={() => handlePageChange(page - 1)}
+          disabled={page <= 1}
+        >
           ← Anterior
         </button>
-        <p>
+        <p className="text-green-800 font-medium">
           Página {page} de {totalPages}
         </p>
         <button
+          className="bg-green-200 border border-green-800 text-green-800 px-2 py-1"
           onClick={() => handlePageChange(page + 1)}
           disabled={page >= totalPages}
         >
