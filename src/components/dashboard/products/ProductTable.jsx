@@ -23,7 +23,8 @@ export default function ProductTable({
           <th className="text-green-800 font-medium text-md">Variantes</th>
           <th className="text-green-800 font-medium text-md">Registro</th>
           <th className="text-green-800 font-medium text-md pl-2">URL</th>
-          <th className="text-green-800 font-medium text-md">Opciones</th>
+          <th className="text-green-800 font-medium text-md pl-2">Imagen</th>
+          <th className="text-green-800 font-medium text-md pl-2">Opciones</th>
         </tr>
       </thead>
 

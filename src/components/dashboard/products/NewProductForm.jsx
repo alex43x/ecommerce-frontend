@@ -222,8 +222,7 @@ export default function NewProductForm({ onExit = () => {} }) {
           sortBy: "dateDesc",
           forceRefresh: true,
         });
-      } catch (e) {
-        console.error(e);
+      } catch {
         await Swal.fire({
           title: "Error",
           text: "Hubo un problema al actualizar la lista de productos.",
@@ -233,8 +232,7 @@ export default function NewProductForm({ onExit = () => {} }) {
       }
 
       onExit();
-    } catch (err) {
-      console.error(err);
+    } catch {
       await Swal.fire({
         title: "Error",
         text: "Hubo un problema al guardar el producto.",

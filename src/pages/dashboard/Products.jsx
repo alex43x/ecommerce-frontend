@@ -13,6 +13,7 @@ import az from "../../images/a-z.png";
 import za from "../../images/z-a.png";
 import calendario from "../../images/calendario.png";
 import precio from "../../images/precio.png";
+import Swal from "sweetalert2";
 
 export default function Products() {
   const {
@@ -53,6 +54,7 @@ export default function Products() {
     try {
       await getProducts({ ...filters, limit: 15 });
     } catch (error) {
+      Swal.fire("Error","No se pudieron cargar los productos.","error")
       console.error("Error loading products:", error);
     }
   }, [filters, getProducts]);
@@ -66,9 +68,6 @@ export default function Products() {
   useEffect(() => {
     loadProducts();
   }, [loadProducts]);
-  useEffect(() => {
-    console.log(productsByCategory, totalPagesByCategory);
-  }, [productsByCategory, totalPagesByCategory]);
 
   // Búsqueda con debounce
   useEffect(() => {

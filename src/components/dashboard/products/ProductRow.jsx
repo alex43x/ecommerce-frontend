@@ -4,6 +4,8 @@ import VariantsTable from "./VariantsTable"; // Asegúrate que esté el path cor
 import eliminar from "../../../images/error.png";
 import guardar from "../../../images/guardar.png";
 import editar from "../../../images/editar.png";
+import imagen from "../../../images/imagen.png";
+
 import Swal from "sweetalert2";
 
 export default function ProductRow({
@@ -78,8 +80,18 @@ export default function ProductRow({
       await updateProduct({ _id: product._id, ...editForm });
       setEditProductId(null);
       await refreshProducts();
-    } catch (error) {
-      console.error(error);
+      Swal.fire({
+        icon: "success",
+        title: "Producto actualizado",
+        timer: 1200,
+        showConfirmButton: false,
+      });
+    } catch {
+      Swal.fire({
+        icon: "error",
+        title: "Error al guardar",
+        text: "No se pudo actualizar el producto.",
+      });
     }
   };
 
@@ -100,8 +112,7 @@ export default function ProductRow({
         await deleteProduct(product._id);
         await refreshProducts();
         Swal.fire("Eliminado", "El producto ha sido eliminado.", "success");
-      } catch (error) {
-        console.error(error);
+      } catch {
         Swal.fire("Error", "No se pudo eliminar el producto.", "error");
       }
     }
@@ -127,7 +138,7 @@ export default function ProductRow({
       </td>
 
       <td className="align-top">
-        <div className="min-w-[125px] flex flex-wrap gap-2">
+        <div className="min-w-[105px] flex flex-wrap gap-2">
           {isEditing ? (
             categories.map((cat) => (
               <label key={cat._id} className="flex items-center gap-1 text-xs">
@@ -174,7 +185,7 @@ export default function ProductRow({
         </div>
       </td>
       <td className="p-2 align-top">
-        <div className="min-w-[110px] break-all overflow-auto h-20">
+        <div className="min-w-[90px] break-all overflow-auto h-20">
           {isEditing ? (
             <input
               type="text"
@@ -184,8 +195,22 @@ export default function ProductRow({
               onChange={handleChange}
             />
           ) : (
-            product.imageURL
+            <div className="flex gap-2 justify-between w-full">
+              <p className="w-11/12">{product.imageURL}</p>
+            </div>
           )}
+        </div>
+      </td>
+      <td className="p-2 ">
+        <div className="min-w-[80px]">
+          <img
+            className="w-52 h-24 object-cover rounded-lg shadow-2xl shadow-black"
+            src={product.imageURL || imagen}
+            alt={product.name || "Imagen del producto"}
+            onError={(e) => {
+              e.target.src = imagen; // Fallback si la URL falla
+            }}
+          />
         </div>
       </td>
 
@@ -198,7 +223,11 @@ export default function ProductRow({
                 className="bg-green-200 text-green-800 text-md rounded px-2 py-1 flex items-center gap-1 w-fit border border-green-800 hover:bg-green-300"
               >
                 <p>Guardar</p>
-                <img className="w-4 h-4 object-contain" src={guardar} alt="" />
+                <img
+                  className="w-4 h-4 object-contain"
+                  src={guardar}
+                  alt="Guardar"
+                />
               </button>
               <button
                 onClick={() => {

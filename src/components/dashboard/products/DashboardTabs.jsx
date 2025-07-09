@@ -2,12 +2,12 @@ import React, { useState } from "react";
 import Reports from "../../../pages/dashboard/Reports";
 import Sales from "../../../pages/dashboard/Sales";
 import Products from "../../../pages/dashboard/Products";
-import Customers from "../../../pages/dashboard/Customers";
+//import Customers from "../../../pages/dashboard/Customers";
 
 import producto from "../../../images/producto.png";
 import venta from "../../../images/venta.png";
 import reporte from "../../../images/reporte.png";
-import cliente from "../../../images/cliente.png";
+//import cliente from "../../../images/cliente.png";
 
 export default function DashboardTabs() {
   const [activeTab, setActiveTab] = useState("products");
@@ -44,6 +44,7 @@ export default function DashboardTabs() {
           Reportes
           <img className="w-5 object-contain" src={reporte} alt="" />
         </button>
+        {/*
         <button
           className={tabClasses("clientes")}
           onClick={() => setActiveTab("clientes")}
@@ -51,6 +52,7 @@ export default function DashboardTabs() {
           Clientes
           <img className="w-5 object-contain" src={cliente} alt="" />
         </button>
+        */}
       </div>
 
       {/* Contenido dinámico */}
@@ -59,7 +61,7 @@ export default function DashboardTabs() {
       )}
       {activeTab === "sales" && <Sales />}
       {activeTab === "reportes" && <Reports />}
-      {activeTab === "clientes" && <Customers />}
+      {/*activeTab === "clientes" && <Customers />*/}
     </div>
   );
 }
