@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useCart } from "../../context/cart/CartContext";
 import { useAuth } from "../../context/auth/AuthContext";
 import { useSale } from "../../context/sale/SaleContext";
@@ -59,7 +59,10 @@ export default function OrderDetail({
     paymentError: false,
   });
 
-  const [customerName, setCustomerName] = useState("");
+  const [customerName, setCustomerName] = useState(
+    saleData?.status === "ordered" ? saleData.ruc : ""
+  );
+  const [customerRUC, setCustomerRUC] = useState(0);
   const [multiPayments, setMultiPayments] = useState(
     paymentOptions.map((opt) => ({ paymentMethod: opt.value, totalAmount: 0 }))
   );
@@ -216,30 +219,26 @@ export default function OrderDetail({
     });
   };
 
-  useEffect(() => {
-    console.log("CustomerName: ", customerName);
-  }, [customerName]);
   // Función para buscar cliente por RUC
   const handleRucSearch = async () => {
     const ruc = formState.ruc.trim();
-    console.log(ruc);
+
     if (!ruc) return;
     try {
       const customers = await searchCustomerByRuc(ruc);
-      console.log(customers)
+
       if (customers.length > 0) {
         const foundCustomer = customers[0];
         setCustomerName(foundCustomer.razonSocial);
+        setCustomerRUC(foundCustomer.ruc);
         Swal.fire({
           title: "Cliente encontrado",
           html: `Nombre: <b>${foundCustomer.razonSocial}</b><br>RUC: <b>${foundCustomer.ruc}</b>`,
           icon: "success",
           confirmButtonColor: "#057c37",
         });
-      } 
-      
-    } catch (error) {
-      console.error("No se pudo encontrar cliente:", error);
+      }
+    } catch {
       Swal.fire({
         title: "No se pudo encontrar cliente",
         text: "Ruc no válido",
@@ -251,7 +250,10 @@ export default function OrderDetail({
 
   // Función handleSave
   const handleSave = useCallback(async () => {
-    if ((!isPendingOrOrdered && !formState.ruc.trim()) || customerName == "") {
+    if (
+      (saleData?.status === "pending" && !formState.ruc.trim()) ||
+      customerName == ""
+    ) {
       return Swal.fire({
         title: "Campo requerido",
         text: "Por favor ingresa un RUC válido",
@@ -287,11 +289,11 @@ export default function OrderDetail({
       if (isPendingOrOrdered) {
         const updatedSale = {
           ...saleData,
-          user:saleData.user._id,
+          user: saleData.user._id,
           payment: currentPayments,
           status: "completed",
           stage: "delivered",
-          ruc: formState.ruc.trim() || "Sin RUC",
+          ruc: customerRUC || formState.ruc.trim() || "Sin RUC",
         };
 
         await updateSale(saleData._id, updatedSale);
@@ -319,7 +321,7 @@ export default function OrderDetail({
             name: item.name,
           })),
           totalAmount,
-          ruc: formState.ruc.trim() || "Sin RUC",
+          ruc: customerRUC || formState.ruc.trim() || "Sin RUC",
           payment: currentPayments,
           iva: Math.round(total / 11),
           user: user.id,
@@ -345,8 +347,7 @@ export default function OrderDetail({
         });
       }
       onExit();
-    } catch (e) {
-      console.error(e);
+    } catch {
       Swal.fire({
         title: "Error",
         text: "Hubo un problema al registrar el pago",
@@ -354,6 +355,7 @@ export default function OrderDetail({
         confirmButtonColor: "#057c37",
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isPendingOrOrdered,
     formState.ruc,
@@ -371,7 +373,7 @@ export default function OrderDetail({
     createSale,
     setCart,
     onExit,
-    customerName
+    customerName,
   ]);
 
   const handleSavePendingSale = useCallback(async () => {
@@ -401,7 +403,7 @@ export default function OrderDetail({
             name: item.name,
           })),
           totalAmount,
-          ruc: formState.ruc.trim() || "Sin RUC",
+          ruc: customerRUC || formState.ruc.trim() || "Sin RUC",
           payment: paymentData,
           iva: Math.round(total / 11),
           user: user.id,
@@ -426,8 +428,7 @@ export default function OrderDetail({
           confirmButtonColor: "#057c37",
         });
         onExit();
-      } catch (e) {
-        console.error("Error al guardar venta pendiente:", e);
+      } catch {
         Swal.fire({
           title: "Error",
           text: "No se pudo guardar la venta pendiente",
@@ -436,6 +437,7 @@ export default function OrderDetail({
         });
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isPendingOrOrdered,
     buildPaymentData,
@@ -450,7 +452,7 @@ export default function OrderDetail({
     onExit,
     total,
     today,
-    customerName
+    customerName,
   ]);
 
   const formatCurrency = (value) =>
@@ -574,18 +576,21 @@ export default function OrderDetail({
                     }));
                     setCustomerName("");
                   }}
-                  disabled={saleData?.status=="ordered"}
+                  disabled={saleData?.status == "ordered"}
                   onKeyDown={(e) => e.key === "Enter" && handleRucSearch()}
                   type="text"
                   className="px-2 py-1 w-full bg-neutral-50"
                   placeholder="Ingrese RUC"
                 />
-                <button
+                {/*
+
+                  <button
                   onClick={() => setShowCustomerForm(true)}
                   className="bg-blue-100 text-blue-800 px-3 py-1 rounded text-sm whitespace-nowrap border border-blue-800"
-                >
+                  >
                   + Cliente
                 </button>
+                */}
               </div>
 
               {customerName && (

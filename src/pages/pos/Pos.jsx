@@ -36,6 +36,7 @@ export default function POS() {
     updateHighlight();
     window.addEventListener("resize", updateHighlight);
     return () => window.removeEventListener("resize", updateHighlight);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const nav = useNavigate();
