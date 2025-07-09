@@ -1,4 +1,4 @@
-import React, { useState,  useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { UserContext } from "./UserContext";
 import { useAuth } from "../auth/AuthContext";
 
@@ -37,40 +37,41 @@ export const UserProvider = ({ children }) => {
   };
 
   // Obtener usuarios con paginación
-  const getUsers = useCallback(async (pageParam = page, sizeParam = pageSize) => {
-    startLoading();
-    try {
-      // Se asume que el backend acepta query params para paginación
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/users?page=${pageParam}&limit=${sizeParam}`,
-        {
-          method: "GET",
-          headers: getAuthHeaders(),
+  const getUsers = useCallback(
+    async (pageParam = page, sizeParam = pageSize) => {
+      startLoading();
+      try {
+        // Se asume que el backend acepta query params para paginación
+        const res = await fetch(
+          `${
+            import.meta.env.VITE_API_URL
+          }/api/users?page=${pageParam}&limit=${sizeParam}`,
+          {
+            method: "GET",
+            headers: getAuthHeaders(),
+          }
+        );
+
+        handleUnauthorized(res);
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || "Error al obtener usuarios");
         }
-      );
 
-      handleUnauthorized(res);
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Error al obtener usuarios");
+        const data = await res.json();
+        setUsers(data.data); // datos paginados
+        setTotalUsers(data.totalItems || 0); // total usuarios para paginación
+        setTotalPages(data.totalPages);
+        setPage(pageParam);
+        setPageSize(sizeParam);
+      } finally {
+        endLoading();
       }
-
-      const data = await res.json();
-      console.log(data)
-      setUsers(data.data); // datos paginados
-      setTotalUsers(data.totalItems || 0); // total usuarios para paginación
-      setTotalPages(data.totalPages)
-      setPage(pageParam);
-      setPageSize(sizeParam);
-    } catch (e) {
-      console.error("Error en getUsers:", e);
-      throw e;
-    } finally {
-      endLoading();
-    }
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [logout, page, pageSize]);
+    [logout, page, pageSize]
+  );
 
   // Crear usuario y actualizar lista local
   const createUser = async (user) => {
@@ -98,10 +99,7 @@ export const UserProvider = ({ children }) => {
       setTotalUsers((t) => t + 1);
 
       return data;
-    } catch (e) {
-      console.error("Error en createUser:", e);
-      throw e;
-    } finally {
+    }  finally {
       endLoading();
     }
   };
@@ -135,9 +133,6 @@ export const UserProvider = ({ children }) => {
       );
 
       return data;
-    } catch (e) {
-      console.error("Error en updateUser:", e);
-      throw e;
     } finally {
       endLoading();
     }
@@ -168,10 +163,7 @@ export const UserProvider = ({ children }) => {
       setTotalUsers((t) => Math.max(t - 1, 0));
 
       return data;
-    } catch (e) {
-      console.error("Error en deleteUser:", e);
-      throw e;
-    } finally {
+    }  finally {
       endLoading();
     }
   };
