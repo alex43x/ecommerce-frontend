@@ -1,68 +1,84 @@
 import React, { useState, useEffect } from "react";
-import { jwtDecode } from "jwt-decode";
-import { AuthContext } from "./AuthContext";
-import { useNavigate } from "react-router-dom";
-import Swal from "sweetalert2";
+import { jwtDecode } from "jwt-decode"; // Para decodificar el token JWT
+import { AuthContext } from "./AuthContext"; // Contexto global de autenticación
+import { useNavigate } from "react-router-dom"; // Para redirección de rutas
+import Swal from "sweetalert2"; // Librería para mostrar alertas elegantes
 
+// Componente proveedor del contexto de autenticación
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [autenticated, setAutenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [users, setUsers] = useState([]);
-  const navigate = useNavigate();
+  const [user, setUser] = useState(null); // Estado para guardar datos del usuario autenticado
+  const [authenticated, setAuthenticated] = useState(false); // Estado de autenticación
+  const [loading, setLoading] = useState(true); // Estado de carga mientras se valida el token
 
+  const navigate = useNavigate(); // Hook para redirección
+
+  // Función que valida si el token JWT en localStorage es válido y no ha expirado
   const validateToken = () => {
     const token = localStorage.getItem("AuthToken");
     if (!token) {
+      // Si no hay token, se fuerza logout
       setUser(null);
-      setAutenticated(false);
+      setAuthenticated(false);
       setLoading(false);
+      navigate("/login");
       return;
     }
+
     try {
-      const decoded = jwtDecode(token);
-      setUser(decoded);
-      const tokenExpiration = decoded.exp * 1000;
+      const decoded = jwtDecode(token); // Decodifica el token
+      const tokenExpiration = decoded.exp * 1000; // Convierte el tiempo de expiración a milisegundos
       const now = Date.now();
+
       if (tokenExpiration < now) {
+        // Si el token expiró, se borra y redirige a la pagina de login
         localStorage.removeItem("AuthToken");
-        setAutenticated(false);
-        setLoading(false);
-      } else {
-        setUser(decoded);
-        setAutenticated(true);
+        setAuthenticated(false);
+        setUser(null);
+        Swal.fire({
+          icon: "warning",
+          title: "Sesión expirada",
+          text: "Por favor, inicia sesión nuevamente.",
+        });
+        navigate("/login");
+        return;
       }
-    } catch (error) {
+
+      // Si el token es válido y no expiró, actualiza los estados
+      setUser(decoded);
+      setAuthenticated(true);
+    } catch {
+      // Si el token es inválido (por ejemplo, mal formado)
       localStorage.removeItem("AuthToken");
       setUser(null);
-      setAutenticated(false);
-      console.error(error);
+      setAuthenticated(false);
+      navigate("/login");
     } finally {
-      setLoading(false);
+      setLoading(false); // Termina el estado de carga
     }
   };
 
+  // Función para loguear un usuario: guarda token, decodifica y redirige según el rol
   const login = async (userData, token) => {
-    localStorage.setItem("AuthToken", token);
-    console.log(token)
-    const decoded = jwtDecode(token);
-    setUser(userData.data.user);
-    setAutenticated(true);
-    console.log(decoded)
+    localStorage.setItem("AuthToken", token); // Guarda el token
+    const decoded = jwtDecode(token); // Decodifica el token
+
+    setUser(userData.data.user); // Guarda los datos del usuario (puede mejorarse: usar decoded)
+    setAuthenticated(true);
+
     try {
-      // Verificar si el usuario está activo
+      // Verifica si el usuario está activo
       if (decoded.active === "disable") {
         throw new Error("User is inactive");
       }
 
-      // Navegar según el rol del usuario
-      console.log(decoded.role,user)
+      // Redirige según el rol
       if (decoded.role === "admin" || decoded.role === "spadmin") {
         navigate("/dashboard");
       } else {
         navigate("/pos");
       }
     } catch (error) {
+      // Si hay un error (por ejemplo, usuario inactivo)
       Swal.fire({
         icon: "error",
         title: "Login failed",
@@ -70,131 +86,37 @@ export const AuthProvider = ({ children }) => {
       });
       localStorage.removeItem("AuthToken");
       setUser(null);
-      setAutenticated(false);
+      setAuthenticated(false);
     }
   };
 
+  // Función para cerrar sesión (borra token y redirige)
   const logout = () => {
     localStorage.removeItem("AuthToken");
     setUser(null);
-    setAutenticated(false);
-    window.location.replace("/login");
+    setAuthenticated(false);
+    window.location.replace("/login"); // Se recarga completamente para limpiar el estado
   };
 
+  // useEffect que valida el token al iniciar la app y cada 60 segundos
   useEffect(() => {
-    validateToken();
+    validateToken(); // Validación inicial
+
+    const interval = setInterval(() => {
+      validateToken(); // Validación cada minuto
+    }, 60 * 1000);
+
+    return () => clearInterval(interval); // Limpia el intervalo al desmontar
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const getUsers = async () => {
-    setLoading(true);
-    const token = localStorage.getItem("AuthToken");
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await res.json();
-      setUsers(data);
-      console.log(data);
-    } catch (e) {
-      console.error(e);
-      throw e;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createUser = async (user) => {
-    setLoading(true);
-    const token = localStorage.getItem("AuthToken");
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(user),
-      });
-      const data = await res.json();
-      console.log(data);
-    } catch (e) {
-      console.error(e);
-      throw e;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateUser = async (user) => {
-    const token = localStorage.getItem("AuthToken");
-    setLoading(true);
-    const { _id, ...rest } = user;
-    try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/users/${_id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(rest),
-        }
-      );
-      const data = await res.json();
-      console.log(data);
-    } catch (e) {
-      console.error(e);
-      throw e;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteUser = async (id) => {
-    const token = localStorage.getItem("AuthToken");
-    setLoading(true);
-    try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/users/${id}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      const data = await res.json();
-      console.log(data);
-    } catch (e) {
-      console.error(e);
-      throw e;
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Retorna el proveedor del contexto con todos los valores
   return (
     <AuthContext.Provider
-      value={{
-        user,
-        autenticated,
-        loading,
-        users,
-        getUsers,
-        updateUser,
-        createUser,
-        deleteUser,
-        login,
-        logout,
-      }}
+      value={{ user, authenticated, loading, login, logout }}
     >
-      {children}
+      {/* Mientras carga la validación, se muestra "Cargando..." */}
+      {loading ? <div>Cargando...</div> : children}
     </AuthContext.Provider>
   );
 };

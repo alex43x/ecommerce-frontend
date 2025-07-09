@@ -213,20 +213,33 @@ export const CustomerProvider = ({ children }) => {
   };
   const searchCustomerByRuc = async (ruc) => {
     try {
-      // Hacer la petición al endpoint
       const response = await fetch(
         `https://turuc.com.py/api/contribuyente?ruc=${ruc}`
       );
 
       if (!response.ok) {
+        if (response.status === 400) {
+          // Datos por defecto para Consumidor Final (Paraguay)
+          const defaultCustomer = {
+            doc: 0,
+            razonSocial: "CONSUMIDOR FINAL",
+            dv: 0,
+            ruc: "44444401-7",
+            estado: "ACTIVO",
+            esPersonaJuridica: false,
+            esEntidadPublica: false,
+          };
+
+          setCustomer(defaultCustomer);
+          return [defaultCustomer];
+        }
         throw new Error(`Error HTTP: ${response.status}`);
       }
 
       const result = await response.json();
-      console.log(result)
-      // Verificar si la respuesta tiene datos válidos
+      console.log(result);
+
       if (result.data && result.data.ruc) {
-        // Mapear los datos al formato que necesitas
         const customerData = {
           doc: result.data.doc,
           razonSocial: result.data.razonSocial,
@@ -237,7 +250,6 @@ export const CustomerProvider = ({ children }) => {
           esEntidadPublica: result.data.esEntidadPublica,
         };
 
-        // Guardar en el estado (asumiendo que tienes un setCustomer)
         setCustomer(customerData);
         return [customerData];
       } else {
@@ -245,9 +257,8 @@ export const CustomerProvider = ({ children }) => {
       }
     } catch (error) {
       console.error("Error buscando contribuyente:", error);
-      // Limpiar el estado en caso de error
       setCustomer(null);
-      throw error; // Puedes manejar este error donde llames a la función
+      throw error;
     }
   };
   // 🔸 Limpiar resultados de búsqueda
@@ -271,7 +282,7 @@ export const CustomerProvider = ({ children }) => {
         searchCustomers,
         clearSearchResults,
         setCustomerDetail,
-        searchCustomerByRuc
+        searchCustomerByRuc,
       }}
     >
       {children}
