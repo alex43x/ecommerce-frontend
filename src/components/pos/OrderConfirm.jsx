@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { useCart } from "../../context/cart/CartContext";
 import { useAuth } from "../../context/auth/AuthContext";
 import { useSale } from "../../context/sale/SaleContext";
@@ -45,12 +45,13 @@ export default function OrderDetail({
   const { user } = useAuth();
   const { createSale, getSales, updateSale } = useSale();
   const { searchCustomerByRuc } = useCustomer();
-
+  const [activeMethod, setActiveMethod] = useState("cash");
   const today = useMemo(() => new Date().toISOString().split("T")[0], []);
   const isPendingOrOrdered = useMemo(
     () => saleData?.status === "pending" || saleData?.status === "ordered",
     [saleData]
   );
+  const [inFocus, setInFocus] = useState(!isPendingOrOrdered ? "ruc" : "cash");
 
   const [formState, setFormState] = useState({
     ruc: saleData?.ruc || "",
@@ -60,14 +61,16 @@ export default function OrderDetail({
   });
 
   const [customerName, setCustomerName] = useState(
-    saleData?.status === "ordered" ? saleData.ruc : ""
+    saleData?.status === "ordered" ? saleData.customerName : ""
   );
   const [customerRUC, setCustomerRUC] = useState(0);
   const [multiPayments, setMultiPayments] = useState(
     paymentOptions.map((opt) => ({ paymentMethod: opt.value, totalAmount: 0 }))
   );
   const [showCustomerForm, setShowCustomerForm] = useState(false);
-
+  useEffect(() => {
+    console.log(inFocus);
+  });
   // Cálculos memoizados
   const {
     items,
@@ -113,19 +116,83 @@ export default function OrderDetail({
   ]);
 
   // Funciones de manejo
-  const handleKeyPress = useCallback((num) => {
-    setFormState((prev) => ({
-      ...prev,
-      received: parseInt(`${prev.received}${num}`),
-    }));
-  }, []);
+  const handleKeyPress = useCallback(
+    (num) => {
+      if (!formState.multi && !isPendingOrOrdered) {
+        // Si es "ruc" y el valor ingresado es "-" o un número
+        if (inFocus === "ruc") {
+          setFormState((prev) => ({
+            ...prev,
+            ruc: `${prev.ruc}${num}`,
+          }));
+        } else {
+          // Caso normal para campos numéricos
+          setFormState((prev) => ({
+            ...prev,
+            [inFocus]: parseInt(`${prev[inFocus]}${num}`),
+          }));
+        }
+      } else {
+        const otherPaymentsTotal = multiPayments
+          .filter((p) => p.paymentMethod !== inFocus)
+          .reduce((sum, p) => sum + p.totalAmount, 0);
+
+        const maxAllowed = isPendingOrOrdered
+          ? remainingAmount - otherPaymentsTotal
+          : total - otherPaymentsTotal;
+
+        setMultiPayments((prev) =>
+          prev.map((item) => {
+            if (item.paymentMethod === inFocus) {
+              const newAmount = parseInt(`${item.totalAmount}${num}`);
+              return {
+                ...item,
+                totalAmount: newAmount > maxAllowed ? maxAllowed : newAmount,
+              };
+            }
+            return item;
+          })
+        );
+      }
+
+      console.log(formState, inFocus, multiPayments);
+    },
+    [
+      formState,
+      inFocus,
+      multiPayments,
+      isPendingOrOrdered,
+      remainingAmount,
+      total,
+    ]
+  );
 
   const handleClear = useCallback(() => {
-    setFormState((prev) => ({
-      ...prev,
-      received: Math.floor(prev.received / 10),
-    }));
-  }, []);
+    if (!formState.multi) {
+      if (inFocus === "ruc") {
+        setFormState((prev) => ({
+          ...prev,
+          ruc: prev.ruc.slice(0, -1), // Elimina el último carácter
+        }));
+      } else {
+        setFormState((prev) => ({
+          ...prev,
+          [inFocus]: Math.floor(prev[inFocus] / 10), // Borra último dígito numérico
+        }));
+      }
+    } else {
+      setMultiPayments((prev) =>
+        prev.map((item) =>
+          item.paymentMethod === inFocus
+            ? {
+                ...item,
+                totalAmount: Math.floor(item.totalAmount / 10),
+              }
+            : item
+        )
+      );
+    }
+  }, [formState.multi, inFocus]);
 
   const handleReceivedChange = useCallback((e) => {
     const value = e.target.value;
@@ -250,6 +317,7 @@ export default function OrderDetail({
 
   // Función handleSave
   const handleSave = useCallback(async () => {
+    console.log(customerName);
     if (
       (saleData?.status === "pending" && !formState.ruc.trim()) ||
       customerName == ""
@@ -294,6 +362,7 @@ export default function OrderDetail({
           status: "completed",
           stage: "delivered",
           ruc: customerRUC || formState.ruc.trim() || "Sin RUC",
+          customerName,
         };
 
         await updateSale(saleData._id, updatedSale);
@@ -321,6 +390,7 @@ export default function OrderDetail({
             name: item.name,
           })),
           totalAmount,
+          customerName,
           ruc: customerRUC || formState.ruc.trim() || "Sin RUC",
           payment: currentPayments,
           iva: Math.round(total / 11),
@@ -404,6 +474,7 @@ export default function OrderDetail({
           })),
           totalAmount,
           ruc: customerRUC || formState.ruc.trim() || "Sin RUC",
+          customerName,
           payment: paymentData,
           iva: Math.round(total / 11),
           user: user.id,
@@ -578,10 +649,21 @@ export default function OrderDetail({
                   }}
                   disabled={saleData?.status == "ordered"}
                   onKeyDown={(e) => e.key === "Enter" && handleRucSearch()}
+                  onFocus={() => {
+                    setInFocus("ruc");
+                  }}
                   type="text"
                   className="px-2 py-1 w-full bg-neutral-50"
                   placeholder="Ingrese RUC"
                 />
+                <button
+                  className="bg-green-200 active:bg-green-300 border border-green-800 text-green-800"
+                  onClick={() => {
+                    handleRucSearch();
+                  }}
+                >
+                  Buscar...
+                </button>
                 {/*
 
                   <button
@@ -614,13 +696,16 @@ export default function OrderDetail({
                       id="multi"
                       className="w-7 h-7"
                       checked={formState.multi}
-                      onChange={() =>
+                      onChange={() => {
+                        const newMulti = !formState.multi;
                         setFormState((prev) => ({
                           ...prev,
-                          multi: !prev.multi,
-                        }))
-                      }
+                          multi: newMulti,
+                        }));
+                        setInFocus(!newMulti ? "received" : "cash");
+                      }}
                     />
+
                     <label htmlFor="multi">Pago Múltiple</label>
                   </div>
                   {formState.multi && (
@@ -633,20 +718,30 @@ export default function OrderDetail({
             )}
 
             {formState.multi || isPendingOrOrdered ? (
-              <div className="space-y-2">
-                {paymentOptions.map(({ value, label, icon }) => (
+              <div className="space-y-2 ">
+                <div className="flex bg-neutral-200 justify-between mt-3">
+                  {paymentOptions.map(({ value, label }) => (
+                    <button
+                      key={value}
+                      className={`flex items-center justify-center py-2 px-2 rounded-lg ${
+                        activeMethod === value
+                          ? "bg-green-200 border border-green-800 text-green-800"
+                          : ""
+                      }`}
+                      onClick={() => {
+                        setActiveMethod(value);
+                        setInFocus(value);
+                      }}
+                    >
+                      <p>{label}</p>
+                    </button>
+                  ))}
+                </div>
+                {paymentOptions.map(({ value, label }) => (
                   <div key={value} className="items-center gap-2">
-                    <div className="flex gap-2 mb-1">
-                      <img
-                        src={icon}
-                        alt={label}
-                        className="w-5 object-contain"
-                      />
-                      <p className="w-20 font-medium">{label}</p>
-                    </div>
                     <input
-                      type="number"
-                      className="px-2 py-1 w-full border rounded bg-neutral-50"
+                      type="text"
+                      className="px-2 py-2 mt-1 w-full border border-neutral-400 rounded bg-neutral-50"
                       placeholder={`Monto ${label}`}
                       min={0}
                       max={
@@ -654,6 +749,7 @@ export default function OrderDetail({
                           ? remainingAmount - totalNewPayments
                           : total - totalNewPayments
                       }
+                      hidden={activeMethod !== value}
                       value={
                         multiPayments.find((p) => p.paymentMethod === value)
                           ?.totalAmount || ""
@@ -687,39 +783,46 @@ export default function OrderDetail({
                   className="text-center text-xl font-medium w-full py-1 px-3"
                   onChange={handleReceivedChange}
                   value={` ${formatCurrency(Number(formState.received))}`}
+                  onFocus={() => {
+                    setInFocus("received");
+                  }}
                   type="text"
                 />
-
-                <div className="mt-4 grid grid-cols-3 gap-2">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
-                    <button
-                      key={n}
-                      className="bg-green-100 active:bg-green-200 transition text-xl rounded text-green-800 border border-green-800"
-                      onClick={() => handleKeyPress(n)}
-                    >
-                      {n}
-                    </button>
-                  ))}
-                  <div></div>
-                  <button
-                    className="bg-green-100 active:bg-green-200 transition text-xl rounded text-green-800 border border-green-800"
-                    onClick={() => handleKeyPress(0)}
-                  >
-                    0
-                  </button>
-                  <button
-                    onClick={handleClear}
-                    className="bg-red-100 p-2 rounded text-red-800 flex justify-center border border-red-800"
-                  >
-                    <img
-                      className="w-5 object-contain"
-                      src={icons.borrar}
-                      alt="Borrar"
-                    />
-                  </button>
-                </div>
               </div>
             )}
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+                <button
+                  key={n}
+                  className="bg-green-100 active:bg-green-200 transition text-xl rounded text-green-800 border border-green-800"
+                  onClick={() => handleKeyPress(n)}
+                >
+                  {n}
+                </button>
+              ))}
+              <button
+                className="bg-green-100 active:bg-green-200 transition text-xl rounded text-green-800 border border-green-800"
+                onClick={() => handleKeyPress("-")}
+              >
+                -
+              </button>
+              <button
+                className="bg-green-100 active:bg-green-200 transition text-xl rounded text-green-800 border border-green-800"
+                onClick={() => handleKeyPress(0)}
+              >
+                0
+              </button>
+              <button
+                onClick={handleClear}
+                className="bg-red-100 p-2 rounded text-red-800 flex justify-center border border-red-800"
+              >
+                <img
+                  className="w-5 object-contain"
+                  src={icons.borrar}
+                  alt="Borrar"
+                />
+              </button>
+            </div>
 
             {formState.paymentError && (
               <p className="text-red-600 text-sm mt-1">

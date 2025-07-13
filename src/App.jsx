@@ -7,6 +7,7 @@ import POS from "./pages/pos/Pos";
 import Unauthorized from "./pages/Unauthorized";
 import DashboardLayout from "./layouts/DashboardLayout";
 
+import { useAuth } from "./context/auth/AuthContext";
 import { ProductProvider } from "./context/product/ProductProvider";
 import { SaleProvider } from "./context/sale/SaleProvider";
 import { UserProvider } from "./context/user/UserProvider";
@@ -17,6 +18,10 @@ import { ReportProvider } from "./context/report/ReportProvider";
 import { CustomerProvider } from "./context/customer/CustomerProvider";
 
 function App() {
+  const { loading } = useAuth();
+
+  if (loading) return <div>Cargando sesión...</div>; // 👈 Evita render antes de validar
+
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/login" />} />
@@ -24,7 +29,7 @@ function App() {
       <Route path="/unauthorized" element={<Unauthorized />} />
 
       {/* Rutas para Admin */}
-      <Route element={<ProtectedRoute allowedRoles={["admin","spadmin"]} />}>
+      <Route element={<ProtectedRoute allowedRoles={["admin", "spadmin"]} />}>
         <Route path="/" element={<DashboardLayout />}>
           <Route
             path="/dashboard"
@@ -32,12 +37,13 @@ function App() {
               <CustomerProvider>
                 <UserProvider>
                   <SaleProvider>
-                    <ProductProvider>
-                      <ReportProvider>
-                        {" "}
-                        <Dashboard />
-                      </ReportProvider>
-                    </ProductProvider>
+                    <CartProvider>
+                      <ProductProvider>
+                        <ReportProvider>
+                          <Dashboard />
+                        </ReportProvider>
+                      </ProductProvider>
+                    </CartProvider>
                   </SaleProvider>
                 </UserProvider>
               </CustomerProvider>
@@ -54,7 +60,11 @@ function App() {
         </Route>
       </Route>
       {/* Rutas para Admin y Users */}
-      <Route element={<ProtectedRoute allowedRoles={["admin", "cashier","spadmin"]} />}>
+      <Route
+        element={
+          <ProtectedRoute allowedRoles={["admin", "cashier", "spadmin"]} />
+        }
+      >
         <Route
           path="/pos"
           element={

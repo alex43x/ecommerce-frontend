@@ -10,6 +10,7 @@ import terminado from "../../images/terminado.png";
 import listo from "../../images/listo.png";
 import marcarListo from "../../images/restaurante.png";
 
+
 const statusOptions = [
   { value: "all", label: "Todos" },
   { value: "completed", label: "Completados" },
@@ -19,7 +20,7 @@ const statusOptions = [
 ];
 
 export default function PendingSales() {
-  const { getSales, sales, updateSaleStatus, page, setPage, totalPages } =
+  const { getSales, sales, updateSaleStatus, updateSale,page, setPage, totalPages } =
     useSale();
   const [confirmOrder, setConfirmOrder] = useState(false);
   const [order, setOrder] = useState();
@@ -186,7 +187,18 @@ export default function PendingSales() {
                   })}
                 </p>
               </div>
-
+              {sale.status === "completed" && (
+                <div className="flex justify-center items-center">
+                  <button
+                    className="bg-green-200 rounded-lg text-green-800 px-3 py-1 flex gap-1 w-fit mt-2 justify-center border border-green-800"
+                    onClick={() => {
+                      updateSale(sale._id, sale);
+                    }}
+                  >
+                    Imprimir Ticket
+                  </button>
+                </div>
+              )}
               {/* Mostrar botones solo si el estado es "pending" u "ordered" */}
               {["pending", "ordered"].includes(sale.status) && (
                 <div className="flex gap-2 justify-evenly mt-2">
@@ -221,8 +233,8 @@ export default function PendingSales() {
                           endDate: today,
                         });
                         Swal.fire({
-                          title: "Listo",
-                          text: "El estado ha sido cambiado a Ready",
+                          title: "Listo para entregar",
+                          text: "El estado ha sido cambiado a terminado",
                           icon: "success",
                         });
                       }}

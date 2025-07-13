@@ -256,7 +256,7 @@ export const ProductProvider = ({ children }) => {
             );
             handleUnauthorized(res);
             const data = await res.json();
-            setProduct(data);
+            setProduct(data.data);
           }  finally {
             setLoading(false);
           }

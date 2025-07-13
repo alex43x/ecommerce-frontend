@@ -1,12 +1,41 @@
-# React + Vite
+# 📦 Frontend del Sistema PVS
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Este es el frontend del sistema de punto de venta y gestión **PVS**, desarrollado con **React + Vite** y estilizado con **TailwindCSS**.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Tecnologías
 
-## Expanding the ESLint configuration
+- ⚛️ React (v18+)
+- ⚡ Vite
+- 💨 Tailwind CSS
+- 🍪 SweetAlert2
+- 📁 Context API
+- 🌐 Fetch API
+- 📈 Chart.js
 
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## 🎯 Funcionalidades principales
+
+- ✅ Autenticación con JWT
+- 👤 Gestión de usuarios (crear, editar, desactivar)
+- 🛍️ Administración de productos con variantes
+- 🧾 Registro y visualización de ventas
+- 🧾 Consultas de RUC directamente a la DNIT
+- 📊 Reportes y estadísticas en tiempo real (últimos 7 días, métodos de pago, vendedores, productos más vendidos)
+- 💳 Soporte para múltiples métodos de pago
+- 🔐 Control de accesos según rol (super admin, admin, cajero)
+- 📦 Inventario editable en tiempo real
+- 🖨️ Impresión de tickets desde el sistema (Pendiente de Implementación)
+
+---
+
+## 👨‍💻 Autor
+
+**Alex Llamosas**  
+🧑‍🎓 Estudiante de Computer Science  
+📍 Paraguay  
+✉️ Contacto: [alexgllamosas@gmail.com](mailto:alexgllamosas@example.com)
+
+---

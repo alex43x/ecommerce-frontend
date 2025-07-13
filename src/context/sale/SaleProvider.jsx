@@ -153,7 +153,7 @@ export const SaleProvider = ({ children }) => {
           body: JSON.stringify(newSale),
         }
       );
-
+      console.log(id,newSale)
       handleUnauthorized(res);
       const data = await res.json();
 

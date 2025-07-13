@@ -30,14 +30,13 @@ function Login() {
         }
       );
       const data = await response.json();
-      console.log(data.token)
       if (response.ok) {
         login(data, data.data.token);
       } else {
         setError({ ...error, other: data.message });
       }
     } catch (error) {
-      console.error(error);
+      void error;
     }
   };
 

@@ -1,7 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import Swal from "sweetalert2";
+import ProductFormModal from "../../dashboard/products/ProductFormModal";
+import OrderDetail from "../../pos/OrderConfirm";
 
 export default function RecentSales({ sales = [], onCancel }) {
+  const [confirmOrder, setConfirmOrder] = useState(false);
+  const [selectedSale, setSelectedSale] = useState({});
   const handleCancel = async (saleId) => {
     const result = await Swal.fire({
       title: "¿Estás seguro?",
@@ -17,6 +21,11 @@ export default function RecentSales({ sales = [], onCancel }) {
     onCancel(saleId);
 
     Swal.fire("Anulada", "La venta fue anulada correctamente.", "success");
+  };
+
+  const handlePay = (sale) => {
+    setConfirmOrder(true);
+    setSelectedSale(sale);
   };
 
   const formatDate = (isoDate) => {
@@ -101,7 +110,10 @@ export default function RecentSales({ sales = [], onCancel }) {
           </thead>
           <tbody>
             {sales.map((sale) => (
-              <tr key={sale._id} className="border-b-2 border-neutral-300 hover:bg-neutral-200 transition">
+              <tr
+                key={sale._id}
+                className="border-b-2 border-neutral-300 hover:bg-neutral-200 transition"
+              >
                 <td className="text-left align-top py-2 pl-1 font-medium">
                   {formatDate(sale.date)}
                 </td>
@@ -134,11 +146,11 @@ export default function RecentSales({ sales = [], onCancel }) {
                         key={index}
                         className="bg-green-200 border border-green-800 px-2 rounded w-fit my-2 py-1 text-green-800 font-medium"
                       >
-                        {methodMap[p.paymentMethod] || p.paymentMethod}: {" "}
+                        {methodMap[p.paymentMethod] || p.paymentMethod}:{" "}
                         {p.totalAmount.toLocaleString("es-PY", {
-                            style: "currency",
-                            currency: "PYG",
-                          })}
+                          style: "currency",
+                          currency: "PYG",
+                        })}
                       </div>
                     ))}
                   </div>
@@ -154,20 +166,46 @@ export default function RecentSales({ sales = [], onCancel }) {
                 </td>
                 <td>{sale.user?.name}</td>
                 <td>
-                  {sale.status !== "annulled" && (
-                    <button
-                      onClick={() => handleCancel(sale._id)}
-                      className="px-3 py-1 rounded-md text-sm font-semibold bg-red-200 text-red-800 hover:bg-red-300 border border-red-800"
-                    >
-                      Anular
-                    </button>
-                  )}
+                  <div className=" flex gap-2">
+                    {(sale?.status === "pending" ||
+                      sale?.status === "ordered") && (
+                      <div>
+                        <button
+                          onClick={() => handlePay(sale)}
+                          className="px-3 py-1 rounded-md text-sm font-semibold bg-green-200 text-green-800 hover:bg-green-300 border border-green-800"
+                        >
+                          Pagar
+                        </button>
+                      </div>
+                    )}
+
+                    {sale?.status !== "annulled" && (
+                      <button
+                        onClick={() => handleCancel(sale._id)}
+                        className="px-3 py-1 rounded-md text-sm font-semibold bg-red-200 text-red-800 hover:bg-red-300 border border-red-800"
+                      >
+                        Anular
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      <ProductFormModal
+        isOpen={confirmOrder}
+        onClose={() => {
+          setConfirmOrder(false);
+        }}
+      >
+        <OrderDetail
+          onExit={() => setConfirmOrder(false)}
+          saleData={selectedSale}
+          paymentMode="complete"
+        />
+      </ProductFormModal>
     </div>
   );
 }
