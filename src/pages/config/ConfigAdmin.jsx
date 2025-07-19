@@ -10,7 +10,7 @@ import editar from "../../images/editar.png";
 
 // Mapeo de roles a español
 const ROLE_TRANSLATIONS = {
-  spadmin: "Super Administrador",
+  spadmin: "Administrador General",
   admin: "Administrador",
   cashier: "Cajero",
 };
@@ -95,13 +95,13 @@ export default function ConfigAdmin() {
                     <td className="p-3">
                       <button
                         className={`flex items-center gap-2 px-3 py-1 rounded border transition-colors ${
-                          (u.role === "admin" && user.role === "admin") ||
+                          ((u.role === "admin" && user.role === "admin") && user.name!==u.name) ||
                           (u.role === "spadmin" && user.role === "admin")
                             ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                             : "bg-green-200 text-green-800 border-green-800 hover:bg-green-300"
                         }`}
                         disabled={
-                          (u.role === "admin" && user.role === "admin") ||
+                          ((u.role === "admin" && user.role === "admin") && user.name!==u.name) ||
                           (u.role === "spadmin" && user.role === "admin")
                         }
                         onClick={() => {

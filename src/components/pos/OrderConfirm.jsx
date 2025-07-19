@@ -703,6 +703,7 @@ export default function OrderDetail({
                           multi: newMulti,
                         }));
                         setInFocus(!newMulti ? "received" : "cash");
+                        setActiveMethod("cash")
                       }}
                     />
 
