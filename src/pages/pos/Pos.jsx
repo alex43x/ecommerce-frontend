@@ -8,6 +8,7 @@ import soda from "../../images/soda.png";
 import orden from "../../images/orden.png";
 import log_out from "../../images/logout.png";
 import usuario from "../../images/usuario.png";
+import eqtg from "../../images/eqtg.png";
 
 import { useNavigate } from "react-router-dom";
 
@@ -46,9 +47,8 @@ export default function POS() {
     <div>
       <section className="w-[13%] fixed h-screen top-0 left-0 z-0 bg-[#e5faf1] flex flex-col justify-between  overflow-hidden">
         <div>
-          <h1 className="ml-4 mt-5">POS</h1>
-          <p className="text-green-800 ml-4 font-medium">Tienda</p>
 
+          <img src={eqtg} alt="Eso Que Te Gusta" />
           {/* Resaltador animado */}
           <div
             ref={containerRef}

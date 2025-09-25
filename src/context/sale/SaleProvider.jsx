@@ -8,7 +8,7 @@ export const SaleProvider = ({ children }) => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [sale, setSale] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [fetched, setFetched] = useState(false);
 
   const { logout } = useAuth();
@@ -74,6 +74,7 @@ export const SaleProvider = ({ children }) => {
       setPage(data.currentPage);
       setTotalPages(data.totalPages);
       setFetched(true);
+      console.log(data)
     } finally {
       setLoading(false);
     }
