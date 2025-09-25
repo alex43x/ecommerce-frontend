@@ -43,7 +43,7 @@ export default function OrderDetail({
   const { cart, setCart, totalAmount, paymentMethod, setPaymentMethod } =
     useCart();
   const { user } = useAuth();
-  const { createSale, getSales, updateSale } = useSale();
+  const { createSale, getSales, updateSale, loading } = useSale();
   const { searchCustomerByRuc } = useCustomer();
   const [activeMethod, setActiveMethod] = useState("cash");
   const today = useMemo(() => new Date().toISOString().split("T")[0], []);
@@ -118,6 +118,9 @@ export default function OrderDetail({
   // Funciones de manejo
   const handleKeyPress = useCallback(
     (num) => {
+      if (num === 11) {
+        num = "000";
+      }
       if (!formState.multi && !isPendingOrOrdered) {
         // Si es "ruc" y el valor ingresado es "-" o un número
         if (inFocus === "ruc") {
@@ -379,6 +382,7 @@ export default function OrderDetail({
           icon: "success",
           confirmButtonColor: "#057c37",
         });
+        setPaymentMethod("cash");
       } else {
         const newSale = {
           products: cart.map((item) => ({
@@ -415,6 +419,7 @@ export default function OrderDetail({
           icon: "success",
           confirmButtonColor: "#057c37",
         });
+        setPaymentMethod("cash");
       }
       onExit();
     } catch {
@@ -498,6 +503,7 @@ export default function OrderDetail({
           icon: "success",
           confirmButtonColor: "#057c37",
         });
+        setPaymentMethod("cash");
         onExit();
       } catch {
         Swal.fire({
@@ -703,7 +709,7 @@ export default function OrderDetail({
                           multi: newMulti,
                         }));
                         setInFocus(!newMulti ? "received" : "cash");
-                        setActiveMethod("cash")
+                        setActiveMethod("cash");
                       }}
                     />
 
@@ -773,7 +779,12 @@ export default function OrderDetail({
                           ? "bg-green-200 border border-green-800 text-green-800"
                           : ""
                       }`}
-                      onClick={() => setPaymentMethod(value)}
+                      onClick={() => {
+                        setPaymentMethod(value);
+                        value === "cash"
+                          ? (formState.received = 0)
+                          : (formState.received = totalAmount);
+                      }}
                     >
                       <p>{label}</p>
                     </button>
@@ -801,11 +812,18 @@ export default function OrderDetail({
                   {n}
                 </button>
               ))}
+              {/*
               <button
                 className="bg-green-100 active:bg-green-200 transition text-xl rounded text-green-800 border border-green-800"
                 onClick={() => handleKeyPress("-")}
               >
                 -
+              </button>*/}
+              <button
+                className="bg-green-100 active:bg-green-200 transition text-xl rounded text-green-800 border border-green-800"
+                onClick={() => handleKeyPress(11)}
+              >
+                000
               </button>
               <button
                 className="bg-green-100 active:bg-green-200 transition text-xl rounded text-green-800 border border-green-800"
@@ -836,6 +854,7 @@ export default function OrderDetail({
             <button
               className="bg-green-200 border border-green-800 rounded-lg text-green-800 flex gap-1 px-2 py-1 min-w-4/12 justify-evenly"
               onClick={handleSave}
+              disabled={loading}
             >
               <p>{isPendingOrOrdered ? "Completar Pago" : "Finalizar"}</p>
               <img

@@ -8,7 +8,7 @@ import vaciar from "../../images/vaciar.png";
 import carrito from "../../images/carrito.png";
 
 export default function OrderView() {
-  const { cart, setCart, totalAmount, removeFromCart, paymentMethod } =
+  const { cart, setCart, totalAmount, removeFromCart, paymentMethod,setPaymentMethod } =
     useCart();
   const [saleMode, setSaleMode] = useState("local");
   const [confirmOrder, setConfirmOrder] = useState(false);
@@ -150,7 +150,7 @@ export default function OrderView() {
       {/* Modal */}
       <ProductFormModal
         isOpen={confirmOrder}
-        onClose={() => setConfirmOrder(false)}
+        onClose={() => {setConfirmOrder(false),setPaymentMethod("cash")}}
       >
         <OrderDetail onExit={() => setConfirmOrder(false)} mode={saleMode} paymentMode="first"/>
       </ProductFormModal>

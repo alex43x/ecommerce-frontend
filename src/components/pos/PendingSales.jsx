@@ -109,7 +109,7 @@ export default function PendingSales() {
             >
               <div className="flex justify-between items-center mb-2 border-b-2 border-neutral-200 pb-2">
                 <h3 className="font-medium text-lg">
-                  Orden #{sale._id.slice(-3).toUpperCase()}
+                  Orden #{sale.dailyId}
                 </h3>
                 {/* Mostrar stage con imagen */}
                 {sale.stage === "delivered" && (
