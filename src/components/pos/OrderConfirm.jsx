@@ -4,7 +4,7 @@ import { useAuth } from "../../context/auth/AuthContext";
 import { useSale } from "../../context/sale/SaleContext";
 import { useCustomer } from "../../context/customer/CustomerContext";
 import Swal from "sweetalert2";
-import CustomerForm from "../dashboard/customers/NewCustomerForm"; // Asegúrate de que la ruta sea correcta
+import CustomerForm from "../dashboard/customers/NewCustomerForm";
 
 // Importar imágenes
 import cerrarIcon from "../../images/eliminar.png";
@@ -57,7 +57,6 @@ export default function OrderDetail({
     !isPendingOrOrdered ? "ruc" : "received"
   );
   const [formState, setFormState] = useState({
-    //
     ruc: saleData?.ruc || "",
     received: 0,
     multi: false,
@@ -280,7 +279,7 @@ export default function OrderDetail({
       const maxAllowed = isPendingOrOrdered ? remainingAmount : total;
       return [
         {
-          paymentMethod: paymentMethod||activeMethod,
+          paymentMethod: paymentMethod || activeMethod,
           totalAmount: Math.min(formState.received, maxAllowed),
           date: timestamp,
         },
@@ -319,11 +318,17 @@ export default function OrderDetail({
         setCustomerName(foundCustomer.razonSocial);
         setCustomerRUC(foundCustomer.ruc);
         Swal.fire({
+          toast: true,
+          position: "top-end",
+          icon: "success",
           title: "Cliente encontrado",
           html: `Nombre: <b>${foundCustomer.razonSocial}</b><br>RUC: <b>${foundCustomer.ruc}</b>`,
-          icon: "success",
-          confirmButtonColor: "#057c37",
+          showConfirmButton: false,
+          timer: 3500,
+          background: "#e9f7ef",
+          iconColor: "#057c37",
         });
+
         setInFocus(formState.multi ? activeMethod : "received");
       }
     } catch {
@@ -342,11 +347,15 @@ export default function OrderDetail({
       customerName === ""
     ) {
       return Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "warning",
         title: "Campo requerido",
         text: "Por favor ingresa un RUC válido",
-        icon: "warning",
-        confirmButtonText: "Aceptar",
-        confirmButtonColor: "#057c37",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        iconColor: "#f59e0b", // color warning
       });
     }
 
@@ -366,15 +375,19 @@ export default function OrderDetail({
     if (totalPaid < total) {
       setFormState((prev) => ({ ...prev, paymentError: true }));
       return Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "error",
         title: "Monto insuficiente",
         text: `El ${
           isPendingOrOrdered ? "pago total" : "pago"
         } (₲ ${totalPaid.toLocaleString()}) no cubre el ${
           isPendingOrOrdered ? "saldo" : "total"
         } (₲ ${total.toLocaleString()})`,
-        icon: "error",
-        confirmButtonText: "Aceptar",
-        confirmButtonColor: "#057c37",
+        showConfirmButton: false,
+        timer: 4000,
+        timerProgressBar: true,
+        iconColor: "#dc2626", // rojo error
       });
     }
 
@@ -382,6 +395,7 @@ export default function OrderDetail({
 
     try {
       if (isPendingOrOrdered) {
+        //Ventas reserva-ordenadas
         // Combina pagos anteriores y nuevos para enviar al backend
         const updatedSale = {
           ...saleData,
@@ -403,15 +417,19 @@ export default function OrderDetail({
         });
 
         Swal.fire({
+          toast: true,
+          position: "top-end",
+          icon: "success",
           title: "Venta completada",
           text: "El pago fue registrado con éxito",
-          icon: "success",
-          confirmButtonColor: "#057c37",
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
         });
         setPaymentMethod("cash");
       } else {
-        // Venta 
-        console.log(newPayments)
+        // Venta nueva
+        console.log(newPayments);
         const newSale = {
           products: cart.map((item) => ({
             productId: item.productId,
@@ -443,11 +461,16 @@ export default function OrderDetail({
         setCart([]);
 
         Swal.fire({
+          toast: true,
+          position: "top-end",
+          icon: "success",
           title: "Venta completada",
           text: "El pago fue registrado con éxito",
-          icon: "success",
-          confirmButtonColor: "#057c37",
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
         });
+
         setPaymentMethod("cash");
       }
 
@@ -490,11 +513,15 @@ export default function OrderDetail({
         customerName === ""
       ) {
         return Swal.fire({
+          toast: true,
+          position: "top-end",
+          icon: "warning",
           title: "Campo requerido",
           text: "Por favor ingresa un RUC válido",
-          icon: "warning",
-          confirmButtonText: "Aceptar",
-          confirmButtonColor: "#057c37",
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+          iconColor: "#f59e0b", // warning
         });
       }
       try {
@@ -528,11 +555,18 @@ export default function OrderDetail({
         });
         setCart([]);
         Swal.fire({
+          toast: true,
+          position: "top-end",
+          icon: "success",
           title: "Guardado",
           text: `Venta guardada como ${hasPayments ? "pedido" : "reserva"}`,
-          icon: "success",
-          confirmButtonColor: "#057c37",
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+          background: "#e9f7ef",
+          iconColor: "#057c37",
         });
+
         setPaymentMethod("cash");
         onExit();
       } catch {
@@ -796,7 +830,7 @@ export default function OrderDetail({
                       }`}
                       onClick={() => {
                         setPaymentMethod(value);
-                        console.log(value,formState)
+                        console.log(value, formState);
                         if (!isPendingOrOrdered) {
                           // Venta nueva
                           setFormState((prev) => ({
