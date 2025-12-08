@@ -397,6 +397,7 @@ export default function OrderDetail({
       if (isPendingOrOrdered) {
         //Ventas reserva-ordenadas
         // Combina pagos anteriores y nuevos para enviar al backend
+        const auxGet=saleData?.status
         const updatedSale = {
           ...saleData,
           user: saleData.user._id,
@@ -414,6 +415,7 @@ export default function OrderDetail({
           forceRefresh: true,
           startDate: today,
           endDate: today,
+          status:auxGet
         });
 
         Swal.fire({
