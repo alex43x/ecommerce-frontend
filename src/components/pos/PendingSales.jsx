@@ -10,7 +10,6 @@ import terminado from "../../images/terminado.png";
 import listo from "../../images/listo.png";
 import marcarListo from "../../images/restaurante.png";
 
-
 const statusOptions = [
   { value: "all", label: "Todos" },
   { value: "completed", label: "Completados" },
@@ -20,15 +19,32 @@ const statusOptions = [
 ];
 
 export default function PendingSales() {
-  const { getSales, sales, updateSaleStatus, updateSale,page, setPage, totalPages } =
-    useSale();
+  const {
+    getSales,
+    sales,
+    updateSaleStatus,
+    updateSale,
+    page,
+    setPage,
+    totalPages,
+  } = useSale();
   const [confirmOrder, setConfirmOrder] = useState(false);
   const [order, setOrder] = useState();
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [dailyId, setDailyId] = useState("");
+  const [debouncedDailyId, setDebouncedDailyId] = useState("");
 
   const today = new Date().toLocaleDateString("sv-SE", {
     timeZone: "America/Asuncion",
   });
+
+    useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedDailyId(dailyId);
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [dailyId]);
 
   useEffect(() => {
     setPage(1); // solo cuando cambia el filtro
@@ -41,9 +57,10 @@ export default function PendingSales() {
       status: selectedStatus,
       startDate: today,
       endDate: today,
+      dailyId:debouncedDailyId,
       forceRefresh: true,
     });
-  }, [page, selectedStatus]);
+  }, [page, selectedStatus,debouncedDailyId]);
 
   const handlePageChange = (newPage) => {
     setPage(newPage);
@@ -98,6 +115,16 @@ export default function PendingSales() {
             {label}
           </button>
         ))}
+        <div className="flex items-center gap-2 ml-auto">
+          <input
+            type="number"
+            value={dailyId}
+            min={1}
+            onChange={(e) => setDailyId(e.target.value)}
+            placeholder="Orden"
+            className="border rounded px-3 py-2 w-24"
+          />
+        </div>
       </div>
 
       <section className="grid grid-cols-2 gap-4">
@@ -108,9 +135,7 @@ export default function PendingSales() {
               className="rounded-lg bg-neutral-50 p-3 shadow"
             >
               <div className="flex justify-between items-center mb-2 border-b-2 border-neutral-200 pb-2">
-                <h3 className="font-medium text-lg">
-                  Orden #{sale.dailyId}
-                </h3>
+                <h3 className="font-medium text-lg">Orden #{sale.dailyId}</h3>
                 {/* Mostrar stage con imagen */}
                 {sale.stage === "delivered" && (
                   <div className="bg-green-100 rounded-lg flex gap-2 px-2 py-1 border border-green-800 hover:bg-green-200 trasnsition">

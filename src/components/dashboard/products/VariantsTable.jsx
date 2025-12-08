@@ -102,11 +102,11 @@ export default function VariantsTable({ variants, onEdit, editing = false }) {
                 )}
               </td>
 
-              <td className="w-[130px] p-1">
+              <td className="w-[110px] max-w-[110px] p-1">
                 {editing ? (
                   <input
                     type="text"
-                    className="p-1 border rounded w-full text-sm"
+                    className="p-1 border rounded w-full text-sm break-words"
                     value={variant.variantName || ""}
                     onChange={(e) =>
                       handleChange(index, "variantName", e.target.value)
@@ -114,7 +114,7 @@ export default function VariantsTable({ variants, onEdit, editing = false }) {
                     aria-label="Nombre de variante"
                   />
                 ) : (
-                  <span className="text-sm font-medium">
+                  <span className="text-sm font-medium break-words whitespace-normal block">
                     {variant.variantName}
                   </span>
                 )}

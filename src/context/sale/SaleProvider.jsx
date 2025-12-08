@@ -33,6 +33,7 @@ export const SaleProvider = ({ children }) => {
     date = null,
     startDate = null,
     endDate = null,
+    dailyId=null,
     paymentMethod = null,
     ruc = null,
     product = null,
@@ -51,6 +52,7 @@ export const SaleProvider = ({ children }) => {
       ...(startDate && endDate ? { startDate, endDate } : {}),
       ...(paymentMethod ? { paymentMethod } : {}),
       ...(ruc ? { ruc } : {}),
+      ...(dailyId ? { dailyId } : {}),
       ...(product ? { product } : {}),
     };
 

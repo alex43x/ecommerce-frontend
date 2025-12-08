@@ -211,56 +211,63 @@ export const CustomerProvider = ({ children }) => {
       return [];
     }
   };
-  const searchCustomerByRuc = async (ruc) => {
-    try {
-      const response = await fetch(
-        `https://turuc.com.py/api/contribuyente?ruc=${ruc}`
-      );
-
-      if (!response.ok) {
-        if (response.status === 400) {
-          // Datos por defecto para Consumidor Final (Paraguay)
-          const defaultCustomer = {
-            doc: 0,
-            razonSocial: "CONSUMIDOR FINAL",
-            dv: 0,
-            ruc: "44444401-7",
-            estado: "ACTIVO",
-            esPersonaJuridica: false,
-            esEntidadPublica: false,
-          };
-
-          setCustomer(defaultCustomer);
-          return [defaultCustomer];
-        }
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log(result);
-
-      if (result.data && result.data.ruc) {
-        const customerData = {
-          doc: result.data.doc,
-          razonSocial: result.data.razonSocial,
-          dv: result.data.dv,
-          ruc: result.data.ruc,
-          estado: result.data.estado,
-          esPersonaJuridica: result.data.esPersonaJuridica,
-          esEntidadPublica: result.data.esEntidadPublica,
-        };
-
-        setCustomer(customerData);
-        return [customerData];
-      } else {
-        throw new Error("No se encontraron datos válidos en la respuesta");
-      }
-    } catch (error) {
-      console.error("Error buscando contribuyente:", error);
-      setCustomer(null);
-      throw error;
-    }
+const searchCustomerByRuc = async (ruc) => {
+  const defaultCustomer = {
+    doc: 0,
+    razonSocial: "CONSUMIDOR FINAL",
+    dv: 0,
+    ruc: "44444401-7",
+    estado: "ACTIVO",
+    esPersonaJuridica: false,
+    esEntidadPublica: false,
   };
+
+  try {
+    const response = await fetch(
+      `https://turuc.com.py/api/contribuyente?ruc=${ruc}`
+    );
+    
+    console.log("Response status:", response.status);
+    
+    if (!response.ok) {
+      // Manejar errores 400, 500 y otros códigos de error HTTP
+      if (response.status === 400 || response.status === 500 || response.status >= 400) {
+        console.warn(`Error HTTP ${response.status}, usando cliente por defecto`);
+        setCustomer(defaultCustomer);
+        return [defaultCustomer];
+      }
+      throw new Error(`Error HTTP: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log("API Response:", result);
+
+    if (result.data && result.data.ruc) {
+      const customerData = {
+        doc: result.data.doc,
+        razonSocial: result.data.razonSocial,
+        dv: result.data.dv,
+        ruc: result.data.ruc,
+        estado: result.data.estado,
+        esPersonaJuridica: result.data.esPersonaJuridica,
+        esEntidadPublica: result.data.esEntidadPublica,
+      };
+
+      setCustomer(customerData);
+      return [customerData];
+    } else {
+      console.warn("No se encontraron datos válidos en la respuesta, usando cliente por defecto");
+      setCustomer(defaultCustomer);
+      return [defaultCustomer];
+    }
+  } catch (error) {
+    console.error("Error buscando contribuyente:", error);
+    
+    // En caso de error de red u otros, también retornar el cliente por defecto
+    setCustomer(defaultCustomer);
+    return [defaultCustomer];
+  }
+};
   // 🔸 Limpiar resultados de búsqueda
   const clearSearchResults = () => {
     setSearchResults([]);

@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useCart } from "../../context/cart/CartContext";
 import { useAuth } from "../../context/auth/AuthContext";
 import { useSale } from "../../context/sale/SaleContext";
@@ -48,16 +48,14 @@ export default function OrderDetail({
   const [activeMethod, setActiveMethod] = useState("cash");
   const today = useMemo(() => new Date().toISOString().split("T")[0], []);
   const isPendingOrOrdered = useMemo(
-    //Bandera para saber si es nueva venta o venta a completar
     () => saleData?.status === "pending" || saleData?.status === "ordered",
     [saleData]
   );
   const [inFocus, setInFocus] = useState(
-    //Input en el cual se esta enfocando
     !isPendingOrOrdered ? "ruc" : "received"
   );
+
   const [formState, setFormState] = useState({
-    //
     ruc: saleData?.ruc || "",
     received: 0,
     multi: false,
@@ -71,6 +69,7 @@ export default function OrderDetail({
   const [multiPayments, setMultiPayments] = useState(
     paymentOptions.map((opt) => ({ paymentMethod: opt.value, totalAmount: 0 }))
   );
+  const [showCustomerForm, setShowCustomerForm] = useState(false);
 
   // Cálculos memoizados
   const {
@@ -81,30 +80,22 @@ export default function OrderDetail({
     vuelto,
     totalNewPayments,
   } = useMemo(() => {
-    const items = saleData?.products || cart; // Productos de la venta
-    const total = saleData?.totalAmount || Number(totalAmount); // Costo total de la venta
-
-    // Monto ya pagado - solo para ventas a completar
+    const items = saleData?.products || cart;
+    const total = saleData?.totalAmount || Number(totalAmount);
     const amountPaid =
       saleData?.payment?.reduce((sum, p) => sum + p.totalAmount, 0) || 0;
-
-    // Restante por pagar - solo para ventas a completar
     const remainingAmount = total - amountPaid;
 
-    // Nuevos pagos
     const totalNewPayments = formState.multi
       ? multiPayments.reduce((sum, p) => sum + p.totalAmount, 0)
       : isPendingOrOrdered
       ? formState.received
       : Math.min(formState.received, total);
 
-    // Vuelto: solo si es pago único
-    const vuelto = !formState.multi
-      ? Math.max(
-          0,
-          (isPendingOrOrdered ? amountPaid : 0) + formState.received - total
-        )
-      : 0;
+    const vuelto =
+      !formState.multi && formState.received > total
+        ? formState.received - total
+        : 0;
 
     return {
       items,
@@ -124,49 +115,51 @@ export default function OrderDetail({
     isPendingOrOrdered,
   ]);
 
+  // Funciones de manejo
   const handleKeyPress = useCallback(
     (num) => {
-      if (num === 11) num = "000";
+      console.log(inFocus);
+      if (num === 11) {
+        num = "000";
+      }
+      if (!formState.multi && !isPendingOrOrdered) {
+        // Si es "ruc" y el valor ingresado es "-" o un número
+        if (inFocus === "ruc") {
+          setFormState((prev) => ({
+            ...prev,
+            ruc: `${prev.ruc}${num}`,
+          }));
+        } else {
+          // Caso normal para campos numéricos
+          setFormState((prev) => ({
+            ...prev,
+            [inFocus]: parseInt(`${prev[inFocus]}${num}`),
+          }));
+        }
+      } else {
+        const otherPaymentsTotal = multiPayments
+          .filter((p) => p.paymentMethod !== inFocus)
+          .reduce((sum, p) => sum + p.totalAmount, 0);
 
-      // Priorizar RUC
-      if (inFocus === "ruc") {
-        setFormState((prev) => ({
-          ...prev,
-          ruc: `${prev.ruc}${num}`,
-        }));
-        return;
+        const maxAllowed = isPendingOrOrdered
+          ? remainingAmount - otherPaymentsTotal
+          : total - otherPaymentsTotal;
+
+        setMultiPayments((prev) =>
+          prev.map((item) => {
+            if (item.paymentMethod === inFocus) {
+              const newAmount = parseInt(`${item.totalAmount}${num}`);
+              return {
+                ...item,
+                totalAmount: newAmount > maxAllowed ? maxAllowed : newAmount,
+              };
+            }
+            return item;
+          })
+        );
       }
 
-      // Pago único (independiente de isPendingOrOrdered)
-      if (!formState.multi) {
-        setFormState((prev) => ({
-          ...prev,
-          [inFocus]: parseInt(`${prev[inFocus]}${num}`) || 0,
-        }));
-        return;
-      }
-
-      // Pago múltiple
-      const otherPaymentsTotal = multiPayments
-        .filter((p) => p.paymentMethod !== inFocus)
-        .reduce((sum, p) => sum + p.totalAmount, 0);
-
-      const maxAllowed = isPendingOrOrdered
-        ? remainingAmount - otherPaymentsTotal
-        : total - otherPaymentsTotal;
-
-      setMultiPayments((prev) =>
-        prev.map((item) => {
-          if (item.paymentMethod === inFocus) {
-            const newAmount = parseInt(`${item.totalAmount}${num}`) || 0;
-            return {
-              ...item,
-              totalAmount: newAmount > maxAllowed ? maxAllowed : newAmount,
-            };
-          }
-          return item;
-        })
-      );
+      console.log(formState, inFocus, multiPayments);
     },
     [
       formState,
@@ -205,35 +198,34 @@ export default function OrderDetail({
     }
   }, [formState.multi, inFocus]);
 
-  const parseNumeric = (raw) => {
-    //Para evitar valores prohibidos
-    const numericValue = String(raw).replace(/[^0-9]/g, "");
-    const cleaned =
+  const handleReceivedChange = useCallback((e) => {
+    const value = e.target.value;
+    const numericValue = value.replace(/[^0-9]/g, "");
+    const cleanedValue =
       numericValue.startsWith("0") && numericValue.length > 1
         ? numericValue.replace(/^0+/, "")
         : numericValue || "0";
 
-    return parseInt(cleaned, 10) || 0;
-  };
-
-  const handleReceivedChange = useCallback((e) => {
-    //Manejo - Pago con un solo método
-    const num = parseNumeric(e.target.value);
     setFormState((prev) => ({
       ...prev,
-      received: num,
+      received: parseInt(cleanedValue, 10) || 0,
     }));
   }, []);
 
   const handlePaymentChange = useCallback(
-    //Manejo - Pago con pago múltiples
-    (method, rawValue) => {
-      let num = parseNumeric(rawValue);
+    (method, value) => {
+      const numericValue = value.replace(/[^0-9]/g, "");
+      let cleaned =
+        numericValue.startsWith("0") && numericValue.length > 1
+          ? numericValue.replace(/^0+/, "")
+          : numericValue || "0";
+
+      let num = parseInt(cleaned, 10) || 0;
 
       const otherPaymentsTotal = multiPayments
         .filter((p) => p.paymentMethod !== method)
         .reduce((sum, p) => sum + p.totalAmount, 0);
-
+      console.log(remainingAmount, otherPaymentsTotal, multiPayments);
       const maxAllowed = isPendingOrOrdered
         ? remainingAmount - otherPaymentsTotal
         : total - otherPaymentsTotal;
@@ -249,62 +241,70 @@ export default function OrderDetail({
     [multiPayments, isPendingOrOrdered, remainingAmount, total]
   );
 
-  const getValidPayments = useCallback(() => {
-    //Obtiene los valores para armar payments
-    const timestamp = new Date().toISOString();
+  const getValidPayments = useCallback(
+    () => multiPayments.filter((p) => p.totalAmount > 0),
+    [multiPayments]
+  );
 
-    if (formState.multi) {
-      return multiPayments
-        .filter((p) => p.totalAmount > 0)
-        .map((p) => {
-          const otherPaymentsTotal = multiPayments
-            .filter((x) => x.paymentMethod !== p.paymentMethod)
-            .reduce((sum, x) => sum + x.totalAmount, 0);
+  const buildPaymentData = useCallback(() => {
+    if (isPendingOrOrdered) {
+      const existingPayments = saleData.payment || [];
+      const timestamp = new Date().toISOString();
 
-          const maxAllowed = isPendingOrOrdered
-            ? remainingAmount - otherPaymentsTotal
-            : total - otherPaymentsTotal;
-
-          const safeAmount = Math.min(p.totalAmount, maxAllowed);
-
-          return {
-            ...p,
-            totalAmount: safeAmount,
-            date: timestamp,
-          };
-        });
+      if (formState.multi) {
+        const newPayments = getValidPayments().map((p) => ({
+          ...p,
+          date: timestamp,
+        }));
+        return [...existingPayments, ...newPayments]; //  usar spread
+      } else {
+        const newPayment = {
+          paymentMethod: activeMethod,
+          totalAmount: formState.received,
+          date: timestamp,
+        };
+        return [...existingPayments, newPayment];
+      }
     }
 
-    // caso single
+    // venta nueva
+    if (formState.multi) {
+      return getValidPayments();
+    }
+
     if (formState.received > 0) {
-      const maxAllowed = isPendingOrOrdered ? remainingAmount : total;
       return [
         {
-          paymentMethod: paymentMethod||activeMethod,
-          totalAmount: Math.min(formState.received, maxAllowed),
-          date: timestamp,
+          paymentMethod,
+          totalAmount: Math.min(formState.received, total),
         },
       ];
     }
 
     return [];
   }, [
+    isPendingOrOrdered,
+    saleData,
+    getValidPayments,
     formState.multi,
     formState.received,
-    multiPayments,
-    isPendingOrOrdered,
-    remainingAmount,
+    paymentMethod,
     total,
     activeMethod,
-    paymentMethod,
   ]);
 
-  const buildPaymentData = useCallback(() => {
-    //Construye payments
-    const existingPayments = isPendingOrOrdered ? saleData.payment || [] : [];
-    const newPayments = getValidPayments();
-    return [...existingPayments, ...newPayments];
-  }, [isPendingOrOrdered, saleData, getValidPayments]);
+  // Función para manejar el cliente creado
+  const handleCustomerCreated = (newCustomer) => {
+    setFormState((prev) => ({ ...prev, ruc: newCustomer.ruc }));
+    setCustomerName(newCustomer.name);
+    setShowCustomerForm(false);
+    Swal.fire({
+      title: "Cliente registrado!",
+      text: `${newCustomer.name} ha sido registrado correctamente`,
+      icon: "success",
+      confirmButtonColor: "#057c37",
+    });
+  };
 
   // Función para buscar cliente por RUC
   const handleRucSearch = async () => {
@@ -324,7 +324,6 @@ export default function OrderDetail({
           icon: "success",
           confirmButtonColor: "#057c37",
         });
-        setInFocus(formState.multi ? activeMethod : "received");
       }
     } catch {
       Swal.fire({
@@ -335,11 +334,11 @@ export default function OrderDetail({
       });
     }
   };
+
   const handleSave = useCallback(async () => {
-    // Validación de RUC
     if (
       (saleData?.status === "pending" && !formState.ruc.trim()) ||
-      customerName === ""
+      customerName == ""
     ) {
       return Swal.fire({
         title: "Campo requerido",
@@ -350,19 +349,25 @@ export default function OrderDetail({
       });
     }
 
-    // Solo los pagos nuevos
-    const newPayments = getValidPayments();
-    const newPaymentsTotal = newPayments.reduce(
+    const currentPayments = buildPaymentData();
+    const newPaymentsTotal = currentPayments.reduce(
       (sum, p) => sum + p.totalAmount,
       0
     );
 
-    // Total pagado considerando pagos anteriores
     const totalPaid = isPendingOrOrdered
       ? amountPaid + newPaymentsTotal
       : newPaymentsTotal;
 
-    // Validación de monto suficiente
+    console.log(
+      "a",
+      totalPaid,
+      amountPaid,
+      currentPayments,
+      total,
+      newPaymentsTotal
+    );
+
     if (totalPaid < total) {
       setFormState((prev) => ({ ...prev, paymentError: true }));
       return Swal.fire({
@@ -382,11 +387,10 @@ export default function OrderDetail({
 
     try {
       if (isPendingOrOrdered) {
-        // Combina pagos anteriores y nuevos para enviar al backend
         const updatedSale = {
           ...saleData,
           user: saleData.user._id,
-          payment: [...(saleData.payment || []), ...newPayments],
+          payment: currentPayments,
           status: "completed",
           stage: "delivered",
           ruc: customerRUC || formState.ruc.trim() || "Sin RUC",
@@ -401,7 +405,6 @@ export default function OrderDetail({
           startDate: today,
           endDate: today,
         });
-
         Swal.fire({
           title: "Venta completada",
           text: "El pago fue registrado con éxito",
@@ -410,8 +413,6 @@ export default function OrderDetail({
         });
         setPaymentMethod("cash");
       } else {
-        // Venta 
-        console.log(newPayments)
         const newSale = {
           products: cart.map((item) => ({
             productId: item.productId,
@@ -424,7 +425,7 @@ export default function OrderDetail({
           totalAmount,
           customerName,
           ruc: customerRUC || formState.ruc.trim() || "Sin RUC",
-          payment: newPayments,
+          payment: currentPayments,
           iva: Math.round(total / 11),
           user: user.id,
           mode,
@@ -441,7 +442,6 @@ export default function OrderDetail({
           endDate: today,
         });
         setCart([]);
-
         Swal.fire({
           title: "Venta completada",
           text: "El pago fue registrado con éxito",
@@ -450,7 +450,6 @@ export default function OrderDetail({
         });
         setPaymentMethod("cash");
       }
-
       onExit();
     } catch {
       Swal.fire({
@@ -460,10 +459,11 @@ export default function OrderDetail({
         confirmButtonColor: "#057c37",
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isPendingOrOrdered,
     formState.ruc,
-    getValidPayments,
+    buildPaymentData,
     amountPaid,
     total,
     saleData,
@@ -478,7 +478,6 @@ export default function OrderDetail({
     setCart,
     onExit,
     customerName,
-    customerRUC,
   ]);
 
   const handleSavePendingSale = useCallback(async () => {
@@ -562,12 +561,23 @@ export default function OrderDetail({
     customerName,
   ]);
 
-  const formatCurrency = (
-    value //Para formatear en guaranies
-  ) => value.toLocaleString("es-PY", { style: "currency", currency: "PYG" });
+  const formatCurrency = (value) =>
+    value.toLocaleString("es-PY", { style: "currency", currency: "PYG" });
 
   return (
     <div className="w-[670px]">
+      {/* Modal para el formulario de cliente */}
+      {showCustomerForm && (
+        <div className="fixed inset-0 backdrop-blur-xs flex items-center justify-center z-50">
+          <div className="bg-neutral-100 rounded-lg p-4 w-[710px] max-w-3xl max-h-[90vh] overflow-y-auto">
+            <CustomerForm
+              onExit={() => setShowCustomerForm(false)}
+              onSuccess={handleCustomerCreated}
+            />
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between mb-3">
         <h3 className="text-2xl font-bold ml-1 text-green-900">
           {isPendingOrOrdered ? "Completar Pago" : "Pago de Orden"}
@@ -643,15 +653,13 @@ export default function OrderDetail({
             )}
 
             <div className="flex justify-between py-1 border-t-2 border-dashed border-neutral-50">
-              <p>{formState.multi ? "Monto restante" : "Vuelto"}</p>
+              <p>{isPendingOrOrdered ? "Falta pagar" : "Vuelto"}</p>
               <p className="text-green-900">
-                {formState.multi
+                {isPendingOrOrdered
                   ? formatCurrency(
-                      isPendingOrOrdered
-                        ? Math.max(0, remainingAmount - totalNewPayments)
-                        : Math.max(0, total - totalNewPayments)
+                      Math.max(0, remainingAmount - totalNewPayments)
                     )
-                  : vuelto > 0
+                  : vuelto > 0 && !formState.multi
                   ? formatCurrency(vuelto)
                   : formatCurrency(0)}
               </p>
@@ -691,6 +699,15 @@ export default function OrderDetail({
                 >
                   Buscar...
                 </button>
+                {/*
+
+                  <button
+                  onClick={() => setShowCustomerForm(true)}
+                  className="bg-blue-100 text-blue-800 px-3 py-1 rounded text-sm whitespace-nowrap border border-blue-800"
+                  >
+                  + Cliente
+                </button>
+                */}
               </div>
 
               {customerName && (
@@ -727,12 +744,7 @@ export default function OrderDetail({
                 </div>
                 {formState.multi && (
                   <p className="text-right text-green-800 font-semibold mt-1">
-                    Restante:{" "}
-                    {formatCurrency(
-                      isPendingOrOrdered
-                        ? remainingAmount - totalNewPayments
-                        : total - totalNewPayments
-                    )}
+                    Restante: {formatCurrency(total - totalNewPayments)}
                   </p>
                 )}
               </div>
@@ -796,7 +808,7 @@ export default function OrderDetail({
                       }`}
                       onClick={() => {
                         setPaymentMethod(value);
-                        console.log(value,formState)
+
                         if (!isPendingOrOrdered) {
                           // Venta nueva
                           setFormState((prev) => ({
