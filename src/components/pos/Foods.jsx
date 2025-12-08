@@ -56,7 +56,7 @@ export default function Foods({ categories }) {
     const delayedSearch = debounce(() => {
       setPagesByCategory((prev) => ({ ...prev, [category]: 1 }));
       fetchProducts({ page: 1, search: searchInput });
-    }, 500);
+    }, 100);
 
     delayedSearch();
     return delayedSearch.cancel;

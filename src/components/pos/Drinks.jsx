@@ -84,7 +84,7 @@ export default function Drinks() {
         search: searchInput,
         sortBy: "dateDesc" // Añadimos sortBy para coincidir con el provider
       });
-    }, 500);
+    }, 100);
 
     delayedSearch();
     return delayedSearch.cancel;
