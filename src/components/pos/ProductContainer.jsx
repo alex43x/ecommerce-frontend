@@ -81,30 +81,32 @@ export default function ProductContainer({ product }) {
   };
 
   return (
-    <div className="bg-green-50 rounded-2xl p-4 shadow-2xl flex flex-col justify-between h-full">
-      <div>
+    <div className="bg-green-50 rounded-2xl p-2 shadow-2xl flex flex-col justify-between h-full">
+      <div className="flex gap-2 max-h-[4.5rem]">
         <img
-          className="w-full h-24 object-cover rounded-2xl"
+          className="w-5/12 h-[4.5rem] object-cover rounded-2xl"
           src={product.imageURL}
           alt={product.name}
         />
-        <h3 className="text-xl font-medium mt-1">{product.name}</h3>
-        <div className="flex justify-between mb-2 items-center font-medium">
-          <p className="text-green-900">{selectedVariant.variantName}</p>
-          <p>
-            {selectedVariant.price.toLocaleString("es-PY", {
-              style: "currency",
-              currency: "PYG",
-            })}
-          </p>
-        </div>
+        <h3 className="mt-1 w-7/12 text-[1.05rem] font-medium break-words ">
+          {product.name}
+        </h3>
+      </div>
+      <div className="flex justify-between my-1 items-center font-medium">
+        <p className="text-green-900">{selectedVariant.variantName}</p>
+        <p>
+          {selectedVariant.price.toLocaleString("es-PY", {
+            style: "currency",
+            currency: "PYG",
+          })}
+        </p>
       </div>
 
       <div className="mt-auto">
-        <div className="grid grid-cols-3 gap-2 text-green-800 mb-2">
+        <div className="grid grid-cols-4 gap-1.5 text-green-800 mb-2">
           {product.variants?.map((variant, index) => (
             <button
-              className={` active:bg-green-300 transition border border-green-900 ${
+              className={`text-sm px-0 active:bg-green-300 transition border border-green-900 ${
                 selectedVariant._id == variant._id
                   ? "bg-green-300"
                   : "bg-green-100"
@@ -121,36 +123,32 @@ export default function ProductContainer({ product }) {
                 lastQuantityRef.current = variantQty;
               }}
             >
-              {variant.abreviation}
+              {variant.abreviation?.slice(0, 3)}
             </button>
           ))}
         </div>
 
         <div className="flex w-full justify-between rounded-xl px-2 py-1 bg-neutral-200 items-center">
-          <div
-            className="rounded-lg bg-green-700 hover:bg-green-600 active:bg-green-500 transition w-10 h-8 text-2xl flex justify-center items-center"
+          <button
+            className="rounded-lg bg-green-700 hover:bg-green-600 active:bg-green-500 transition w-10 h-8 text-2xl flex justify-center items-center text-neutral-100 "
             onMouseDown={() => handleHold(-1)}
             onMouseUp={stopHold}
             onMouseLeave={stopHold}
             onTouchStart={() => handleHold(-1)}
             onTouchEnd={stopHold}
+            onClick={() => {
+              if (selectedVariant.quantity > 0) {
+                addToCart({
+                  product,
+                  variant: selectedVariant,
+                  quantity: -1,
+                });
+                lastQuantityRef.current = selectedVariant.quantity - 1;
+              }
+            }}
           >
-            <button
-              className="text-neutral-100"
-              onClick={() => {
-                if (selectedVariant.quantity > 0) {
-                  addToCart({
-                    product,
-                    variant: selectedVariant,
-                    quantity: -1,
-                  });
-                  lastQuantityRef.current = selectedVariant.quantity - 1;
-                }
-              }}
-            >
-              -
-            </button>
-          </div>
+            -
+          </button>
 
           <input
             className="font-medium bg-neutral-200 w-16 px-1 text-center text-lg"
@@ -160,28 +158,24 @@ export default function ProductContainer({ product }) {
             onChange={handleQuantityChange}
           />
 
-          <div
-            className="rounded-lg bg-green-700 hover:bg-green-600 active:bg-green-500 transition w-10 h-8 text-2xl flex justify-center items-center"
+          <button
+            className="rounded-lg bg-green-700 hover:bg-green-600 active:bg-green-500 transition w-10 h-8 text-2xl flex justify-center items-center text-neutral-100"
             onMouseDown={() => handleHold(1)}
             onMouseUp={stopHold}
             onMouseLeave={stopHold}
             onTouchStart={() => handleHold(1)}
             onTouchEnd={stopHold}
+            onClick={() => {
+              addToCart({
+                product,
+                variant: selectedVariant,
+                quantity: 1,
+              });
+              lastQuantityRef.current = selectedVariant.quantity + 1;
+            }}
           >
-            <button
-              className="text-neutral-100"
-              onClick={() => {
-                addToCart({
-                  product,
-                  variant: selectedVariant,
-                  quantity: 1,
-                });
-                lastQuantityRef.current = selectedVariant.quantity + 1;
-              }}
-            >
-              +
-            </button>
-          </div>
+            +
+          </button>
         </div>
       </div>
     </div>
