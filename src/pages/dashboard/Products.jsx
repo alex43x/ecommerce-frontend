@@ -56,7 +56,7 @@ export default function Products() {
     } catch {
       Swal.fire("Error","No se pudieron cargar los productos.","error")
     }
-  }, [filters, getProducts]);
+  }, [filters]);
 
   // Cargar categorías al montar el componente
   useEffect(() => {
