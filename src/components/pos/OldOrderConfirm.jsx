@@ -118,7 +118,6 @@ export default function OrderDetail({
   // Funciones de manejo
   const handleKeyPress = useCallback(
     (num) => {
-      console.log(inFocus);
       if (num === 11) {
         num = "000";
       }
@@ -159,7 +158,6 @@ export default function OrderDetail({
         );
       }
 
-      console.log(formState, inFocus, multiPayments);
     },
     [
       formState,
@@ -225,7 +223,6 @@ export default function OrderDetail({
       const otherPaymentsTotal = multiPayments
         .filter((p) => p.paymentMethod !== method)
         .reduce((sum, p) => sum + p.totalAmount, 0);
-      console.log(remainingAmount, otherPaymentsTotal, multiPayments);
       const maxAllowed = isPendingOrOrdered
         ? remainingAmount - otherPaymentsTotal
         : total - otherPaymentsTotal;
@@ -359,14 +356,7 @@ export default function OrderDetail({
       ? amountPaid + newPaymentsTotal
       : newPaymentsTotal;
 
-    console.log(
-      "a",
-      totalPaid,
-      amountPaid,
-      currentPayments,
-      total,
-      newPaymentsTotal
-    );
+    
 
     if (totalPaid < total) {
       setFormState((prev) => ({ ...prev, paymentError: true }));

@@ -14,7 +14,6 @@ export const CartProvider = ({ children }) => {
    * Si hay una sola variante llamada "Normal", no se muestra en el nombre del producto.
    */
   const addToCart = ({ product, variant, quantity = 1 }) => {
-    console.log("variant",variant,product,quantity)
     const variantName = variant.variantName;
     const productName =
       product.variants.length === 1 && variantName.toLowerCase() === "normal"

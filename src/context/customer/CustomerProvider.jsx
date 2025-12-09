@@ -122,7 +122,6 @@ export const CustomerProvider = ({ children }) => {
   ) => {
     try {
       const params = new URLSearchParams({ page, limit });
-      console.log(params, page, limit);
       if (search) params.append("search", search);
       if (active !== null) params.append("active", active);
 

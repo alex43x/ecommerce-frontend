@@ -431,7 +431,6 @@ export default function OrderDetail({
         setPaymentMethod("cash");
       } else {
         // Venta nueva
-        console.log(newPayments);
         const newSale = {
           products: cart.map((item) => ({
             productId: item.productId,
@@ -813,7 +812,6 @@ export default function OrderDetail({
                       }
                       onChange={(e) => {
                         handlePaymentChange(value, e.target.value);
-                        console.log(value);
                       }}
                     />
                   </div>
@@ -832,7 +830,6 @@ export default function OrderDetail({
                       }`}
                       onClick={() => {
                         setPaymentMethod(value);
-                        console.log(value, formState);
                         if (!isPendingOrOrdered) {
                           // Venta nueva
                           setFormState((prev) => ({
