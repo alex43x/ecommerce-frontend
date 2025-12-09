@@ -39,13 +39,14 @@ export const ProductProvider = ({ children }) => {
   }) => {
     const cacheKey = `${category}-${search}-${sortBy}`;
     const currentParams = { page, limit, category, search, sortBy };
-
+    console.log(category)
     if (
       !forceRefresh &&
       lastFetchParams[cacheKey] &&
       lastFetchParams[cacheKey].page === page &&
-      JSON.stringify(currentParams) === JSON.stringify(lastFetchParams[cacheKey])
+      JSON.stringify(currentParams) === JSON.stringify(lastFetchParams[cacheKey]) && category!=="Desayuno"
     ) {
+      console.log("a")
       return {
         products: productsByCategory[cacheKey] || [],
         totalPages: totalPagesByCategory[cacheKey] || 1,
