@@ -7,9 +7,10 @@ import listo from "../../images/listo.png";
 import todo from "../../images/todo.png";
 import pendiente from "../../images/pendiente.png";
 import Dropdown from "../../components/dashboard/products/FilterDropdown";
+import Swal from "sweetalert2";
 
 export default function Sales() {
-  const { getSales, sales, loading, page, totalPages, updateSaleStatus } =
+  const { getSales, sales, loading, page, totalPages, updateSaleStatus, exportSalesToExcel } =
     useSale();
   const { users, getUsers } = useUser();
 
@@ -20,6 +21,7 @@ export default function Sales() {
   const [product, setProduct] = useState("");
   const [debouncedProduct, setDebouncedProduct] = useState("");
   const [debouncedRUC, setDebouncedRUC] = useState("");
+  const [isExporting, setIsExporting] = useState(false);
 
   const startDefault = new Date();
   startDefault.setDate(startDefault.getDate() - 7);
@@ -103,6 +105,50 @@ export default function Sales() {
     });
   };
 
+const handleExportExcel = async () => {
+    setIsExporting(true);
+    
+    // Toast de cargando
+    const Toast = Swal.mixin({
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+      didOpen: (toast) => {
+        toast.addEventListener("mouseenter", Swal.stopTimer);
+        toast.addEventListener("mouseleave", Swal.resumeTimer);
+      },
+    });
+
+    try {
+      await exportSalesToExcel({
+        status: status !== "all" ? status : null,
+        startDate: startDate || null,
+        endDate: endDate || null,
+        user: user || null,
+        paymentMethod: paymentMethod || null,
+        ruc: debouncedRUC || null,
+        product: debouncedProduct || null,
+      });
+
+      // Toast de éxito
+      Toast.fire({
+        icon: "success",
+        title: "Excel exportado exitosamente",
+      });
+    } catch (error) {
+      // Toast de error
+      Toast.fire({
+        icon: "error",
+        title: "Error al exportar Excel",
+        text: error.message || "Intenta nuevamente",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const tabClasses = (tab) =>
     `px-4 py-2 rounded-md  transition-colors flex items-center justify-center gap-1 border border-green-800 text-green-800 ${
       status === tab ? "bg-green-300 " : "bg-green-100 hover:bg-green-200  "
@@ -119,6 +165,7 @@ export default function Sales() {
 
   return (
     <div>
+
       {/* Filtros por estado */}
       <section className="flex flex-wrap gap-2 mb-4 ">
         {Object.entries(statusMap).map(([key, { label, icon }]) => (
@@ -128,10 +175,10 @@ export default function Sales() {
             onClick={() => setStatus(key)}
           >
             <img src={icon} alt={label} className="w-4 h-4" />
-
             {label}
           </button>
         ))}
+        
       </section>
 
       {/* Filtros adicionales */}
@@ -192,6 +239,26 @@ export default function Sales() {
             onChange={(e) => setEndDate(e.target.value)}
           />
         </div>
+        <button
+          onClick={handleExportExcel}
+          disabled={isExporting || sales.length === 0}
+          className="bg-green-100 hover:bg-green-200 disabled:bg-green-50 text-green-800 border border-green-800 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+          {isExporting ? "Exportando..." : "Exportar a Excel"}
+        </button>
       </section>
 
       {/* Tabla de ventas */}
@@ -221,7 +288,6 @@ export default function Sales() {
       </section>
 
       {/* Paginación */}
-
       <section className="flex items-center justify-center gap-4 mt-6">
         <button
           className="bg-green-200 border border-green-800 text-green-800 px-2 py-1"
