@@ -110,11 +110,16 @@ export default function CustomerForm({ onExit = () => {}, customerData = null })
         name: !customer.name ? "Nombre es obligatorio" : ""
       }));
       
-      await Swal.fire({
+      // Toast de error para validación
+      Swal.fire({
         icon: "error",
         title: "Campos requeridos",
-        text: "RUC y Nombre son campos obligatorios",
-        confirmButtonColor: "#3085d6",
+        text: "RUC y Nombre son obligatorios",
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
       });
       
       setSubmitting(false);
@@ -125,7 +130,8 @@ export default function CustomerForm({ onExit = () => {}, customerData = null })
       if (customerData) {
         // Modo edición
         const result = await updateCustomer(customerData._id, customer);
-        if (result.success) {
+        if (result) {
+          // Actualizar lista de clientes y cerrar
           await getCustomers(1, 10, '', true);
           onExit();
         }
@@ -133,6 +139,7 @@ export default function CustomerForm({ onExit = () => {}, customerData = null })
         // Modo creación
         const result = await createCustomer(customer);
         if (result.success) {
+          // Actualizar lista de clientes y cerrar
           await getCustomers(1, 10, '', true);
           onExit();
         } else if (result.isDuplicateError) {
@@ -214,7 +221,7 @@ export default function CustomerForm({ onExit = () => {}, customerData = null })
 
           {/* Email */}
           <label className="w-full my-2 font-medium">
-            Email: <RequiredAsterisk />
+            Email:
             <input
               type="email"
               name="email"
@@ -229,7 +236,7 @@ export default function CustomerForm({ onExit = () => {}, customerData = null })
 
           {/* Teléfono */}
           <label className="w-full my-2 font-medium">
-            Teléfono: <RequiredAsterisk />
+            Teléfono:
             <input
               type="text"
               name="phone"

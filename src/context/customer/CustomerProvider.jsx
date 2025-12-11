@@ -4,14 +4,24 @@ import { CustomerContext } from "./CustomerContext";
 
 export const CustomerProvider = ({ children }) => {
   const [customer, setCustomer] = useState({});
-  const [customers, setCustomers] = useState([]);
+  const [customers, setCustomers] = useState({
+    docs: [],
+    total: 0,
+    totalPages: 1,
+    page: 1,
+    limit: 10,
+  });
+
   const [customerDetail, setCustomerDetail] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
   const token = localStorage.getItem("AuthToken");
 
-  // Helper function para peticiones HTTP
+  // ------------------------------------------------------------
+  // 🔷 Helper: Peticiones HTTP
+  // ------------------------------------------------------------
   const fetchData = async (url, method = "GET", body = null) => {
     setLoading(true);
     setError(null);
@@ -25,9 +35,7 @@ export const CustomerProvider = ({ children }) => {
         },
       };
 
-      if (body) {
-        options.body = JSON.stringify(body);
-      }
+      if (body) options.body = JSON.stringify(body);
 
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}${url}`,
@@ -40,7 +48,6 @@ export const CustomerProvider = ({ children }) => {
           errorData.message ||
           `Error ${response.status}: ${response.statusText}`;
 
-        // Mostrar error con Swal
         await Swal.fire({
           icon: "error",
           title: "Error",
@@ -55,30 +62,24 @@ export const CustomerProvider = ({ children }) => {
     } catch (error) {
       console.error("Error en la petición:", error);
       setError(error.message);
-      throw error; // Esto es importante para que el componente pueda capturar el error
+      throw error;
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔸 Crear nuevo cliente
+  // ------------------------------------------------------------
+  // 🔷 Crear cliente
+  // ------------------------------------------------------------
   const createCustomer = async (customerData) => {
     try {
       const data = await fetchData("/api/customers", "POST", customerData);
 
-      // Actualización CORRECTA del estado (sin .docs)
-      setCustomers((prev) => {
-        // Verificar si prev es un array (para compatibilidad hacia atrás)
-        if (Array.isArray(prev)) {
-          return [data, ...prev];
-        }
-        // Si prev es un objeto con paginación
-        return {
-          ...prev,
-          docs: [data, ...(prev.docs || [])],
-          total: (prev.total || 0) + 1,
-        };
-      });
+      setCustomers((prev) => ({
+        ...prev,
+        docs: [data, ...(prev.docs || [])],
+        total: prev.total + 1,
+      }));
 
       await Swal.fire({
         icon: "success",
@@ -89,17 +90,11 @@ export const CustomerProvider = ({ children }) => {
 
       return { success: true, data, isDuplicateError: false };
     } catch (error) {
-      // Manejo específico para error de RUC duplicado
       if (
         error.message.includes("RUC") ||
-        error.message.includes("duplicado") ||
-        (error.response && error.response.status === 409)
+        error.message.includes("duplicado")
       ) {
-        return {
-          success: false,
-          error,
-          isDuplicateError: true,
-        };
+        return { success: false, error, isDuplicateError: true };
       }
 
       await Swal.fire({
@@ -113,28 +108,42 @@ export const CustomerProvider = ({ children }) => {
     }
   };
 
-  // 🔸 Obtener lista de clientes con paginación
+  // ------------------------------------------------------------
+  // 🔷 Obtener clientes (LISTA COMPLETA CON FILTROS + PAGINACIÓN)
+  // ------------------------------------------------------------
   const getCustomers = async (
     page = 1,
     limit = 10,
     search = "",
-    active = null
+    active = null,
+    sortBy = "dateDesc"
   ) => {
     try {
-      const params = new URLSearchParams({ page, limit });
+      const params = new URLSearchParams({ page, limit, sortBy });
+
       if (search) params.append("search", search);
       if (active !== null) params.append("active", active);
 
       const data = await fetchData(`/api/customers?${params.toString()}`);
-      setCustomers(data);
-      return data;
+
+      const adapted = {
+        docs: data.customers,
+        total: data.totalCustomers,
+        totalPages: data.totalPages,
+        page: data.currentPage,
+        limit: data.limit,
+      };
+
+      setCustomers(adapted);
+      return adapted;
     } catch (error) {
-      // El error ya está manejado en fetchData
       return null;
     }
   };
 
-  // 🔸 Obtener detalles de un cliente
+  // ------------------------------------------------------------
+  // 🔷 Obtener un cliente por ID
+  // ------------------------------------------------------------
   const getCustomerById = async (id) => {
     try {
       const data = await fetchData(`/api/customers/${id}`);
@@ -145,18 +154,18 @@ export const CustomerProvider = ({ children }) => {
     }
   };
 
-  // 🔸 Actualizar cliente existente
+  // ------------------------------------------------------------
+  // 🔷 Actualizar cliente
+  // ------------------------------------------------------------
   const updateCustomer = async (id, customerData) => {
     try {
       const data = await fetchData(`/api/customers/${id}`, "PUT", customerData);
 
-      // Actualizar lista de clientes
       setCustomers((prev) => ({
         ...prev,
         docs: prev.docs.map((c) => (c._id === id ? data : c)),
       }));
 
-      // Actualizar detalle si es el mismo cliente
       if (customerDetail?._id === id) {
         setCustomerDetail(data);
       }
@@ -167,7 +176,9 @@ export const CustomerProvider = ({ children }) => {
     }
   };
 
-  // 🔸 Cambiar estado activo/inactivo
+  // ------------------------------------------------------------
+  // 🔷 Activar / Desactivar cliente
+  // ------------------------------------------------------------
   const toggleCustomerStatus = async (id) => {
     try {
       const data = await fetchData(
@@ -175,13 +186,13 @@ export const CustomerProvider = ({ children }) => {
         "PATCH"
       );
 
-      // Actualizar lista de clientes
       setCustomers((prev) => ({
         ...prev,
-        docs: prev.docs.map((c) => (c._id === id ? data.customer : c)),
+        docs: prev.docs.map((c) =>
+          c._id === id ? data.customer : c
+        ),
       }));
 
-      // Actualizar detalle si es el mismo cliente
       if (customerDetail?._id === id) {
         setCustomerDetail(data.customer);
       }
@@ -192,7 +203,9 @@ export const CustomerProvider = ({ children }) => {
     }
   };
 
-  // 🔸 Buscar clientes para autocompletar
+  // ------------------------------------------------------------
+  // 🔷 Búsqueda rápida (autocompletar)
+  // ------------------------------------------------------------
   const searchCustomers = async (term) => {
     if (!term.trim()) {
       setSearchResults([]);
@@ -210,68 +223,66 @@ export const CustomerProvider = ({ children }) => {
       return [];
     }
   };
-const searchCustomerByRuc = async (ruc) => {
-  const defaultCustomer = {
-    doc: 0,
-    razonSocial: "CONSUMIDOR FINAL",
-    dv: 0,
-    ruc: "44444401-7",
-    estado: "ACTIVO",
-    esPersonaJuridica: false,
-    esEntidadPublica: false,
-  };
 
-  try {
-    const response = await fetch(
-      `https://turuc.com.py/api/contribuyente?ruc=${ruc}`
-    );
-    
-    console.log("Response status:", response.status);
-    
-    if (!response.ok) {
-      // Manejar errores 400, 500 y otros códigos de error HTTP
-      if (response.status === 400 || response.status === 500 || response.status >= 400) {
-        console.warn(`Error HTTP ${response.status}, usando cliente por defecto`);
+  // ------------------------------------------------------------
+  // 🔷 Búsqueda de RUC (API externa)
+  // ------------------------------------------------------------
+  const searchCustomerByRuc = async (ruc) => {
+    const defaultCustomer = {
+      doc: 0,
+      razonSocial: "CONSUMIDOR FINAL",
+      dv: 0,
+      ruc: "44444401-7",
+      estado: "ACTIVO",
+      esPersonaJuridica: false,
+      esEntidadPublica: false,
+    };
+
+    try {
+      const response = await fetch(
+        `https://turuc.com.py/api/contribuyente?ruc=${ruc}`
+      );
+
+      if (!response.ok) {
         setCustomer(defaultCustomer);
         return [defaultCustomer];
       }
-      throw new Error(`Error HTTP: ${response.status}`);
-    }
 
-    const result = await response.json();
-    console.log("API Response:", result);
+      const result = await response.json();
 
-    if (result.data && result.data.ruc) {
-      const customerData = {
-        doc: result.data.doc,
-        razonSocial: result.data.razonSocial,
-        dv: result.data.dv,
-        ruc: result.data.ruc,
-        estado: result.data.estado,
-        esPersonaJuridica: result.data.esPersonaJuridica,
-        esEntidadPublica: result.data.esEntidadPublica,
-      };
+      if (result.data && result.data.ruc) {
+        const data = {
+          doc: result.data.doc,
+          razonSocial: result.data.razonSocial,
+          dv: result.data.dv,
+          ruc: result.data.ruc,
+          estado: result.data.estado,
+          esPersonaJuridica: result.data.esPersonaJuridica,
+          esEntidadPublica: result.data.esEntidadPublica,
+        };
 
-      setCustomer(customerData);
-      return [customerData];
-    } else {
-      console.warn("No se encontraron datos válidos en la respuesta, usando cliente por defecto");
+        setCustomer(data);
+        return [data];
+      } else {
+        setCustomer(defaultCustomer);
+        return [defaultCustomer];
+      }
+    } catch (error) {
       setCustomer(defaultCustomer);
       return [defaultCustomer];
     }
-  } catch (error) {
-    console.error("Error buscando contribuyente:", error);
-    
-    // En caso de error de red u otros, también retornar el cliente por defecto
-    setCustomer(defaultCustomer);
-    return [defaultCustomer];
-  }
-};
-  // 🔸 Limpiar resultados de búsqueda
+  };
+
+  // ------------------------------------------------------------
+  // 🔷 Limpiar búsqueda
+  // ------------------------------------------------------------
   const clearSearchResults = () => {
     setSearchResults([]);
   };
 
+  // ------------------------------------------------------------
+  // 🔷 Retornar Provider
+  // ------------------------------------------------------------
   return (
     <CustomerContext.Provider
       value={{
@@ -280,6 +291,7 @@ const searchCustomerByRuc = async (ruc) => {
         searchResults,
         loading,
         error,
+
         getCustomers,
         getCustomerById,
         createCustomer,
@@ -287,8 +299,8 @@ const searchCustomerByRuc = async (ruc) => {
         toggleCustomerStatus,
         searchCustomers,
         clearSearchResults,
-        setCustomerDetail,
         searchCustomerByRuc,
+        setCustomerDetail,
       }}
     >
       {children}
