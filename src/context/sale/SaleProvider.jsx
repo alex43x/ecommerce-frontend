@@ -14,7 +14,6 @@ export const SaleProvider = ({ children }) => {
   const { logout } = useAuth();
 
   const getAuthHeaders = () => ({
-    "Content-Type": "application/json",
     Authorization: `Bearer ${localStorage.getItem("AuthToken")}`,
   });
 
@@ -33,7 +32,7 @@ export const SaleProvider = ({ children }) => {
     date = null,
     startDate = null,
     endDate = null,
-    dailyId=null,
+    dailyId = null,
     paymentMethod = null,
     ruc = null,
     product = null,
@@ -63,7 +62,7 @@ export const SaleProvider = ({ children }) => {
         `${import.meta.env.VITE_API_URL}/api/sales?${params.toString()}`,
         {
           method: "GET",
-          headers: getAuthHeaders(),
+          headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
         }
       );
 
@@ -76,7 +75,6 @@ export const SaleProvider = ({ children }) => {
       setPage(data.currentPage);
       setTotalPages(data.totalPages);
       setFetched(true);
-      console.log(data)
     } finally {
       setLoading(false);
     }
@@ -89,7 +87,7 @@ export const SaleProvider = ({ children }) => {
         `${import.meta.env.VITE_API_URL}/api/sales/${id}`,
         {
           method: "GET",
-          headers: getAuthHeaders(),
+          headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
         }
       );
 
@@ -97,7 +95,6 @@ export const SaleProvider = ({ children }) => {
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.message || "Error al obtener venta");
-
       setSale(data);
     } finally {
       setLoading(false);
@@ -109,7 +106,7 @@ export const SaleProvider = ({ children }) => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/sales`, {
         method: "POST",
-        headers: getAuthHeaders(),
+        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify(sale),
       });
 
@@ -117,7 +114,6 @@ export const SaleProvider = ({ children }) => {
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.message || "Error al guardar venta");
-
       return data;
     } finally {
       setLoading(false);
@@ -130,7 +126,7 @@ export const SaleProvider = ({ children }) => {
         `${import.meta.env.VITE_API_URL}/api/sales/${saleId}/status`,
         {
           method: "PATCH",
-          headers: getAuthHeaders(),
+          headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
           body: JSON.stringify({ status, ruc }),
         }
       );
@@ -152,11 +148,11 @@ export const SaleProvider = ({ children }) => {
         `${import.meta.env.VITE_API_URL}/api/sales/${id}`,
         {
           method: "PUT",
-          headers: getAuthHeaders(),
+          headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
           body: JSON.stringify(newSale),
         }
       );
-      console.log(id,newSale)
+
       handleUnauthorized(res);
       const data = await res.json();
 
@@ -186,6 +182,47 @@ export const SaleProvider = ({ children }) => {
     }
   };
 
+  const exportSalesToExcel = async (filters = {}) => {
+    const params = new URLSearchParams(
+      Object.fromEntries(
+        Object.entries(filters).filter(([_, v]) => v !== null && v !== "")
+      )
+    );
+
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/sales/export/?${params.toString()}`,
+        {
+          method: "GET",
+          headers: getAuthHeaders(),
+        }
+      );
+
+      handleUnauthorized(res);
+
+      if (!res.ok) throw new Error("Error al exportar Excel");
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+
+      const filename =
+        filters.startDate && filters.endDate
+          ? `ventas_${filters.startDate}_${filters.endDate}.xlsx`
+          : "ventas.xlsx";
+
+      a.download = filename;
+      a.click();
+      a.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Error exportando Excel:", err);
+    }
+  };
+
   return (
     <SaleContext.Provider
       value={{
@@ -202,6 +239,7 @@ export const SaleProvider = ({ children }) => {
         updateSale,
         updateSaleStatus,
         deleteSale,
+        exportSalesToExcel,
       }}
     >
       {children}
