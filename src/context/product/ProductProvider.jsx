@@ -39,14 +39,14 @@ export const ProductProvider = ({ children }) => {
   }) => {
     const cacheKey = `${category}-${search}-${sortBy}`;
     const currentParams = { page, limit, category, search, sortBy };
-    console.log(category)
+
     if (
       !forceRefresh &&
       lastFetchParams[cacheKey] &&
       lastFetchParams[cacheKey].page === page &&
-      JSON.stringify(currentParams) === JSON.stringify(lastFetchParams[cacheKey]) && category!=="Desayuno"
+      JSON.stringify(currentParams) === JSON.stringify(lastFetchParams[cacheKey]) &&
+      category !== "Desayuno"
     ) {
-      console.log("a")
       return {
         products: productsByCategory[cacheKey] || [],
         totalPages: totalPagesByCategory[cacheKey] || 1,
@@ -94,7 +94,7 @@ export const ProductProvider = ({ children }) => {
         totalPages: data.totalPages || 1,
         currentPage: data.currentPage || page,
       };
-    }finally {
+    } finally {
       setLoading(false);
     }
   };
@@ -108,34 +108,31 @@ export const ProductProvider = ({ children }) => {
         categories,
         page,
         setPage,
-        
         loading,
         clearProduct: () => setProduct(null),
         getProducts,
         getProductById: async (id) => {
           setLoading(true);
           try {
-            const res = await fetch(
-              `${import.meta.env.VITE_API_URL}/api/products/${id}`,
-              {
-                method: "GET",
-                headers: getAuthHeaders(),
-              }
-            );
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/products/${id}`, {
+              method: "GET",
+              headers: getAuthHeaders(),
+            });
             handleUnauthorized(res);
             const data = await res.json();
             setProduct(data);
-          }  finally {
+          } finally {
             setLoading(false);
           }
         },
         createProduct: async (product) => {
           setLoading(true);
           try {
+            const bodyWithIva = { ...product, iva: product.iva || "10%" };
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/products`, {
               method: "POST",
               headers: getAuthHeaders(),
-              body: JSON.stringify(product),
+              body: JSON.stringify(bodyWithIva),
             });
             handleUnauthorized(res);
             return await res.json();
@@ -146,119 +143,99 @@ export const ProductProvider = ({ children }) => {
         updateProduct: async ({ _id, ...rest }) => {
           setLoading(true);
           try {
-            const res = await fetch(
-              `${import.meta.env.VITE_API_URL}/api/products/${_id}`,
-              {
-                method: "PUT",
-                headers: getAuthHeaders(),
-                body: JSON.stringify(rest),
-              }
-            );
+            const bodyWithIva = { ...rest, iva: rest.iva || "10%" };
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/products/${_id}`, {
+              method: "PUT",
+              headers: getAuthHeaders(),
+              body: JSON.stringify(bodyWithIva),
+            });
             handleUnauthorized(res);
             return await res.json();
-          }  finally {
+          } finally {
             setLoading(false);
           }
         },
         deleteProduct: async (id) => {
           setLoading(true);
           try {
-            const res = await fetch(
-              `${import.meta.env.VITE_API_URL}/api/products/${id}`,
-              {
-                method: "DELETE",
-                headers: getAuthHeaders(),
-              }
-            );
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/products/${id}`, {
+              method: "DELETE",
+              headers: getAuthHeaders(),
+            });
             handleUnauthorized(res);
             return await res.json();
-          }  finally {
+          } finally {
             setLoading(false);
           }
         },
-        getCategories: async (force=false) => {
+        getCategories: async (force = false) => {
           if (fetchedCategories && !force) return;
           setLoading(true);
           try {
-            const res = await fetch(
-              `${import.meta.env.VITE_API_URL}/api/categories`,
-              {
-                method: "GET",
-                headers: getAuthHeaders(),
-              }
-            );
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/categories`, {
+              method: "GET",
+              headers: getAuthHeaders(),
+            });
             handleUnauthorized(res);
             const data = await res.json();
             setCategories(data.data);
             setFetchedCategories(true);
-          }  finally {
+          } finally {
             setLoading(false);
           }
         },
         createCategory: async (category = {}) => {
           setLoading(true);
           try {
-            const res = await fetch(
-              `${import.meta.env.VITE_API_URL}/api/categories`,
-              {
-                method: "POST",
-                headers: getAuthHeaders(),
-                body: JSON.stringify(category),
-              }
-            );
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/categories`, {
+              method: "POST",
+              headers: getAuthHeaders(),
+              body: JSON.stringify(category),
+            });
             handleUnauthorized(res);
             return await res.json();
-          }  finally {
+          } finally {
             setLoading(false);
           }
         },
         updateCategory: async ({ _id, ...rest }) => {
           setLoading(true);
           try {
-            const res = await fetch(
-              `${import.meta.env.VITE_API_URL}/api/categories/${_id}`,
-              {
-                method: "PUT",
-                headers: getAuthHeaders(),
-                body: JSON.stringify(rest),
-              }
-            );
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/categories/${_id}`, {
+              method: "PUT",
+              headers: getAuthHeaders(),
+              body: JSON.stringify(rest),
+            });
             handleUnauthorized(res);
             return await res.json();
-          }  finally {
+          } finally {
             setLoading(false);
           }
         },
         deleteCategory: async (_id) => {
           setLoading(true);
           try {
-            const res = await fetch(
-              `${import.meta.env.VITE_API_URL}/api/categories/${_id}`,
-              {
-                method: "DELETE",
-                headers: getAuthHeaders(),
-              }
-            );
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/categories/${_id}`, {
+              method: "DELETE",
+              headers: getAuthHeaders(),
+            });
             handleUnauthorized(res);
             return await res.json();
-          }  finally {
+          } finally {
             setLoading(false);
           }
         },
         getProductByBarcode: async (barcode) => {
           setLoading(true);
           try {
-            const res = await fetch(
-              `${import.meta.env.VITE_API_URL}/api/products/barcode/${barcode}`,
-              {
-                method: "GET",
-                headers: getAuthHeaders(),
-              }
-            );
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/products/barcode/${barcode}`, {
+              method: "GET",
+              headers: getAuthHeaders(),
+            });
             handleUnauthorized(res);
             const data = await res.json();
             setProduct(data.data);
-          }  finally {
+          } finally {
             setLoading(false);
           }
         },

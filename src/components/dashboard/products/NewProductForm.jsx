@@ -8,22 +8,26 @@ import anadir from "../../../images/anadir.png";
 import guardar from "../../../images/guardar.png";
 
 export default function NewProductForm({ onExit = () => {} }) {
-  const { createProduct, getProducts, getCategories, categories } =
-    useProduct();
+  const { createProduct, getProducts, getCategories, categories } = useProduct();
+
   const [product, setProduct] = useState({
     name: "",
-    price: "0", // Cambiado a string para manejo consistente
+    price: "0",
     imageURL: "",
     variants: [],
     category: [],
+    ivaRate: 10 // IVA por defecto en número
   });
+
   const [errors, setErrors] = useState({
     name: "",
     price: "",
     imageURL: "",
     variants: [],
     category: [],
+    ivaRate: ""
   });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -35,15 +39,12 @@ export default function NewProductForm({ onExit = () => {} }) {
       ...prev,
       variants: [
         ...prev.variants,
-        { variantName: "", price: "0", abreviation: "", barcode: "" },
-      ],
+        { variantName: "", price: "0", abreviation: "", barcode: "", ivaRate: prev.ivaRate }
+      ]
     }));
     setErrors((prev) => ({
       ...prev,
-      variants: [
-        ...prev.variants,
-        { variantName: "", price: "", abreviation: "", barcode: "" },
-      ],
+      variants: [...prev.variants, { variantName: "", price: "", abreviation: "", barcode: "", ivaRate: "" }]
     }));
   };
 
@@ -53,18 +54,18 @@ export default function NewProductForm({ onExit = () => {} }) {
       ...prev,
       category: prev.category.includes(value)
         ? prev.category.filter((cat) => cat !== value)
-        : [...prev.category, value],
+        : [...prev.category, value]
     }));
   };
 
   const handleDelete = (index) => {
     setProduct((prev) => ({
       ...prev,
-      variants: prev.variants.filter((_, i) => i !== index),
+      variants: prev.variants.filter((_, i) => i !== index)
     }));
     setErrors((prev) => ({
       ...prev,
-      variants: prev.variants.filter((_, i) => i !== index),
+      variants: prev.variants.filter((_, i) => i !== index)
     }));
   };
 
@@ -120,16 +121,23 @@ export default function NewProductForm({ onExit = () => {} }) {
     setProduct((prev) => ({ ...prev, variants: updatedVariants }));
   };
 
+  const handleIvaChange = (e) => {
+    let value = e.target.value;
+    if (value === "Exento") value = 0;
+    else value = parseInt(value, 10); // "10%" o "5%" -> 10 o 5
+    setProduct((prev) => ({ ...prev, ivaRate: value }));
+    setErrors((prev) => ({ ...prev, ivaRate: "" }));
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
+    // Validación de errores
     const hasErrors = Object.values(errors).some((error) => {
       if (Array.isArray(error)) {
         return error.some((variantError) =>
-          Object.entries(variantError).some(
-            ([key, value]) => key !== "barcode" && value
-          )
+          Object.entries(variantError).some(([key, value]) => key !== "barcode" && value)
         );
       }
       return error;
@@ -146,11 +154,7 @@ export default function NewProductForm({ onExit = () => {} }) {
       return;
     }
 
-    if (
-      !product.name.trim() ||
-      !product.imageURL.trim() ||
-      Number(product.price) <= 0
-    ) {
+    if (!product.name.trim() || !product.imageURL.trim() || Number(product.price) <= 0) {
       setIsSubmitting(false);
       await Swal.fire({
         title: "Campos incompletos",
@@ -161,20 +165,33 @@ export default function NewProductForm({ onExit = () => {} }) {
       return;
     }
 
+    if (![0, 5, 10].includes(product.ivaRate)) {
+      setErrors((prev) => ({ ...prev, ivaRate: "Selecciona un IVA válido." }));
+      setIsSubmitting(false);
+      await Swal.fire({
+        title: "IVA inválido",
+        text: "Selecciona un IVA válido antes de guardar.",
+        icon: "warning",
+        confirmButtonColor: "#3085d6",
+      });
+      return;
+    }
+
     const finalProduct = { ...product };
 
     if (finalProduct.variants.length === 0) {
       finalProduct.variants = [
-        { variantName: "Normal", price: finalProduct.price, abreviation: "N" },
+        { variantName: "Normal", price: finalProduct.price, abreviation: "N", ivaRate: finalProduct.ivaRate },
       ];
+    } else {
+      finalProduct.variants = finalProduct.variants.map((v) => ({
+        ...v,
+        ivaRate: v.ivaRate ?? finalProduct.ivaRate
+      }));
     }
 
     const invalidVariant = finalProduct.variants.some(
-      (v) =>
-        !v.abreviation.trim() ||
-        !v.variantName.trim() ||
-        !v.price ||
-        v.price <= 0
+      (v) => !v.abreviation.trim() || !v.variantName.trim() || !v.price || v.price <= 0
     );
 
     if (invalidVariant) {
@@ -204,24 +221,20 @@ export default function NewProductForm({ onExit = () => {} }) {
         imageURL: "",
         variants: [],
         category: [],
+        ivaRate: 10
       });
+
       setErrors({
         name: "",
         price: "",
         imageURL: "",
         variants: [],
         category: [],
+        ivaRate: ""
       });
 
       try {
-        await getProducts({
-          page: 1,
-          limit: 10,
-          category: "",
-          search: "",
-          sortBy: "dateDesc",
-          forceRefresh: true,
-        });
+        await getProducts({ page: 1, limit: 10, category: "", search: "", sortBy: "dateDesc", forceRefresh: true });
       } catch {
         await Swal.fire({
           title: "Error",
@@ -247,17 +260,12 @@ export default function NewProductForm({ onExit = () => {} }) {
   return (
     <form onSubmit={handleSave}>
       <div className="flex justify-between m-2 items-center mb-3 ">
-        <h1 className="text-green-800 text-3xl font-medium ">
-          Registrar Producto
-        </h1>
-        <button
-          className="text-green-950 text-xs rounded-full p-1"
-          type="button"
-          onClick={onExit}
-        >
+        <h1 className="text-green-800 text-3xl font-medium ">Registrar Producto</h1>
+        <button className="text-green-950 text-xs rounded-full p-1" type="button" onClick={onExit}>
           <img className="w-5 h-5 object-contain" src={eliminar} alt="" />
         </button>
       </div>
+
       <div className="flex flex-col md:flex-row gap-4 pb-4">
         {/* Sección izquierda */}
         <div className="w-full md:w-1/2 px-2 flex flex-col ">
@@ -271,10 +279,7 @@ export default function NewProductForm({ onExit = () => {} }) {
               value={product.name}
               onChange={(e) => handleChange(e.target.name, e.target.value)}
               placeholder="Nombre del Producto"
-              style={{
-                backgroundColor: errors.name ? "#ffe5e5" : "white",
-                borderColor: errors.name ? "red" : "#ccc",
-              }}
+              style={{ backgroundColor: errors.name ? "#ffe5e5" : "white", borderColor: errors.name ? "red" : "#ccc" }}
               required
             />
             {errors.name && <p className="text-red-600">{errors.name}</p>}
@@ -291,24 +296,43 @@ export default function NewProductForm({ onExit = () => {} }) {
               min={1}
               value={product.price}
               onChange={(e) => handleChange(e.target.name, e.target.value)}
-              style={{
-                backgroundColor: errors.price ? "#ffe5e5" : "white",
-                borderColor: errors.price ? "red" : "#ccc",
-              }}
+              style={{ backgroundColor: errors.price ? "#ffe5e5" : "white", borderColor: errors.price ? "red" : "#ccc" }}
               required
             />
             {errors.price && <p className="text-red-600">{errors.price}</p>}
           </label>
+
+          {/* Selección de IVA */}
+          <fieldset className="my-2">
+            <legend className="font-medium mb-2 text-lg">IVA:</legend>
+            <div className="flex gap-4">
+              {["10%", "5%", "Exento"].map((option) => (
+                <label key={option} className="flex items-center gap-1">
+                  <input
+                    type="radio"
+                    name="ivaRate"
+                    value={option}
+                    checked={
+                      (option === "Exento" && product.ivaRate === 0) ||
+                      (option === "5%" && product.ivaRate === 5) ||
+                      (option === "10%" && product.ivaRate === 10)
+                    }
+                    onChange={handleIvaChange}
+                    className="h-5 w-5 rounded"
+                  />
+                  {option}
+                </label>
+              ))}
+            </div>
+            {errors.ivaRate && <p className="text-red-600">{errors.ivaRate}</p>}
+          </fieldset>
 
           {/* Categorías */}
           <fieldset className="my-2">
             <legend className="font-medium mb-2 text-lg">Categorías:</legend>
             <div className="grid grid-cols-3 gap-2">
               {categories.map((category) => (
-                <label
-                  key={category._id}
-                  className="flex items-center gap-1 my-1"
-                >
+                <label key={category._id} className="flex items-center gap-1 my-1">
                   <input
                     type="checkbox"
                     value={category.name}
@@ -321,6 +345,7 @@ export default function NewProductForm({ onExit = () => {} }) {
               ))}
             </div>
           </fieldset>
+
           {/* Botones */}
           <section className="flex flex-col sm:flex-row gap-2 font-medium w-full mt-auto">
             <button
@@ -345,11 +370,7 @@ export default function NewProductForm({ onExit = () => {} }) {
               ) : (
                 <>
                   <span>Guardar</span>
-                  <img
-                    className="w-5 h-5 object-contain"
-                    src={guardar}
-                    alt=""
-                  />
+                  <img className="w-5 h-5 object-contain" src={guardar} alt="" />
                 </>
               )}
             </button>
@@ -367,15 +388,10 @@ export default function NewProductForm({ onExit = () => {} }) {
               placeholder="URL de la Imagen"
               value={product.imageURL}
               onChange={(e) => handleChange(e.target.name, e.target.value)}
-              style={{
-                backgroundColor: errors.imageURL ? "#ffe5e5" : "white",
-                borderColor: errors.imageURL ? "red" : "#ccc",
-              }}
+              style={{ backgroundColor: errors.imageURL ? "#ffe5e5" : "white", borderColor: errors.imageURL ? "red" : "#ccc" }}
               required
             />
-            {errors.imageURL && (
-              <span className="text-red-600">{errors.imageURL}</span>
-            )}
+            {errors.imageURL && <span className="text-red-600">{errors.imageURL}</span>}
           </label>
 
           <div className="mt-4">
@@ -394,22 +410,15 @@ export default function NewProductForm({ onExit = () => {} }) {
           <h3 className="text-lg font-medium ml-2 my-2">Variantes:</h3>
           <div className="grid grid-cols-3 gap-2 mx-2 border-2 rounded-lg border-neutral-300 p-2">
             {product.variants.map((variant, index) => (
-              <div
-                key={index}
-                className="p-3 bg-green-100 rounded-lg font-medium border border-green-800"
-              >
+              <div key={index} className="p-3 bg-green-100 rounded-lg font-medium border border-green-800">
                 <div className="flex justify-between items-center mb-1">
-                  <label className="">Abreviación:</label>
+                  <label>Abreviación:</label>
                   <button
                     className="rounded p-1 flex items-center justify-center gap-1 w-fit"
                     type="button"
                     onClick={() => handleDelete(index)}
                   >
-                    <img
-                      className="w-4 h-4 object-contain"
-                      src={error}
-                      alt=""
-                    />
+                    <img className="w-4 h-4 object-contain" src={error} alt="" />
                   </button>
                 </div>
                 <input
@@ -419,23 +428,12 @@ export default function NewProductForm({ onExit = () => {} }) {
                   className="w-full px-2 py-1 border rounded"
                   value={variant.abreviation}
                   placeholder="Abreviación para el POS"
-                  onChange={(e) =>
-                    handleVariantsChange(index, e.target.name, e.target.value)
-                  }
-                  style={{
-                    backgroundColor: errors.variants[index]?.abreviation
-                      ? "#ffe5e5"
-                      : "white",
-                    borderColor: errors.variants[index]?.abreviation
-                      ? "red"
-                      : "#ccc",
-                  }}
+                  onChange={(e) => handleVariantsChange(index, e.target.name, e.target.value)}
+                  style={{ backgroundColor: errors.variants[index]?.abreviation ? "#ffe5e5" : "white", borderColor: errors.variants[index]?.abreviation ? "red" : "#ccc" }}
                   required
                 />
                 {errors.variants[index]?.abreviation && (
-                  <span className="text-red-600 text-sm">
-                    {errors.variants[index].abreviation}
-                  </span>
+                  <span className="text-red-600 text-sm">{errors.variants[index].abreviation}</span>
                 )}
 
                 <label className="block mb-2">
@@ -446,23 +444,12 @@ export default function NewProductForm({ onExit = () => {} }) {
                     className="w-full px-2 py-1 border rounded"
                     placeholder="Nombre de la variante"
                     value={variant.variantName}
-                    onChange={(e) =>
-                      handleVariantsChange(index, e.target.name, e.target.value)
-                    }
-                    style={{
-                      backgroundColor: errors.variants[index]?.variantName
-                        ? "#ffe5e5"
-                        : "white",
-                      borderColor: errors.variants[index]?.variantName
-                        ? "red"
-                        : "#ccc",
-                    }}
+                    onChange={(e) => handleVariantsChange(index, e.target.name, e.target.value)}
+                    style={{ backgroundColor: errors.variants[index]?.variantName ? "#ffe5e5" : "white", borderColor: errors.variants[index]?.variantName ? "red" : "#ccc" }}
                     required
                   />
                   {errors.variants[index]?.variantName && (
-                    <span className="text-red-600 text-sm">
-                      {errors.variants[index].variantName}
-                    </span>
+                    <span className="text-red-600 text-sm">{errors.variants[index].variantName}</span>
                   )}
                 </label>
 
@@ -476,23 +463,12 @@ export default function NewProductForm({ onExit = () => {} }) {
                     min={1}
                     className="w-full px-2 py-1 border rounded"
                     value={variant.price}
-                    onChange={(e) =>
-                      handleVariantsChange(index, e.target.name, e.target.value)
-                    }
-                    style={{
-                      backgroundColor: errors.variants[index]?.price
-                        ? "#ffe5e5"
-                        : "white",
-                      borderColor: errors.variants[index]?.price
-                        ? "red"
-                        : "#ccc",
-                    }}
+                    onChange={(e) => handleVariantsChange(index, e.target.name, e.target.value)}
+                    style={{ backgroundColor: errors.variants[index]?.price ? "#ffe5e5" : "white", borderColor: errors.variants[index]?.price ? "red" : "#ccc" }}
                     required
                   />
                   {errors.variants[index]?.price && (
-                    <p className="text-red-600 text-sm">
-                      {errors.variants[index].price}
-                    </p>
+                    <p className="text-red-600 text-sm">{errors.variants[index].price}</p>
                   )}
                 </label>
 
@@ -504,9 +480,7 @@ export default function NewProductForm({ onExit = () => {} }) {
                     placeholder="Código de Barras "
                     className="w-full px-2 py-1 border rounded"
                     value={variant.barcode}
-                    onChange={(e) =>
-                      handleVariantsChange(index, e.target.name, e.target.value)
-                    }
+                    onChange={(e) => handleVariantsChange(index, e.target.name, e.target.value)}
                   />
                 </label>
               </div>
