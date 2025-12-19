@@ -4,6 +4,7 @@ import { useAuth } from "../auth/AuthContext";
 
 export const UserProvider = ({ children }) => {
   const [users, setUsers] = useState([]);
+  const [timbrados, setTimbrados] = useState([]);
   const [loadingCount, setLoadingCount] = useState(0); // contador de operaciones activas
   const [page, setPage] = useState(1); // página actual para paginación
   const [pageSize, setPageSize] = useState(20); // tamaño de página
@@ -99,7 +100,7 @@ export const UserProvider = ({ children }) => {
       setTotalUsers((t) => t + 1);
 
       return data;
-    }  finally {
+    } finally {
       endLoading();
     }
   };
@@ -163,7 +164,78 @@ export const UserProvider = ({ children }) => {
       setTotalUsers((t) => Math.max(t - 1, 0));
 
       return data;
-    }  finally {
+    } finally {
+      endLoading();
+    }
+  };
+
+  // --- TIMBRADOS ---
+  const getTimbrados = async () => {
+    startLoading();
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/timbrados`,
+        {
+          method: "GET",
+          headers: getAuthHeaders(),
+        }
+      );
+  
+      handleUnauthorized(res);
+  
+      const data = await res.json();
+  
+      if (!res.ok) {
+        throw new Error(data.message || "Error al obtener timbrados");
+      }
+  
+      setTimbrados(data.data);
+      return data.data; 
+    } finally {
+      endLoading();
+    }
+  };
+  
+
+  const createTimbrado = async (payload) => {
+    startLoading();
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/timbrados`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+
+      handleUnauthorized(res);
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message);
+
+      setTimbrados((prev) => [data.data, ...prev]);
+      return data.data;
+    } finally {
+      endLoading();
+    }
+  };
+
+  const getTimbradoById = async (id) => {
+    startLoading();
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/timbrados/${id}`,
+        {
+          method: "GET",
+          headers: getAuthHeaders(),
+        }
+      );
+
+      handleUnauthorized(res);
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Error al obtener timbrado");
+
+      return data.data;
+    } finally {
       endLoading();
     }
   };
@@ -173,6 +245,7 @@ export const UserProvider = ({ children }) => {
       value={{
         loading,
         users,
+        timbrados,
         page,
         pageSize,
         totalUsers,
@@ -183,6 +256,10 @@ export const UserProvider = ({ children }) => {
         updateUser,
         createUser,
         deleteUser,
+        // Timbrados
+        getTimbrados,
+        createTimbrado,
+        getTimbradoById,
       }}
     >
       {children}

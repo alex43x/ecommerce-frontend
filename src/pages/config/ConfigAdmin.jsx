@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react"; 
 import { useAuth } from "../../context/auth/AuthContext";
 import { useUser } from "../../context/user/UserContext";
 import EditUser from "../../components/config/EditUser";
@@ -19,21 +19,79 @@ export default function ConfigAdmin() {
   const [editUser, setEditUser] = useState(false);
   const [addUser, setAddUser] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [showTimbradoModal, setShowTimbradoModal] = useState(false);
+  const [formData, setFormData] = useState({
+    code: "",
+    issuedAt: "",
+    expiresAt: "",
+    establishment: "001",
+    branch: "001",
+    maxInvoices: 999999
+  });
+  const [loadingTimbrado, setLoadingTimbrado] = useState(false);
+  const [activeTimbrado, setActiveTimbrado] = useState(null);
 
   const { user } = useAuth();
-  const { users, getUsers, page, totalPages, loading } = useUser();
+  const { users, getUsers, page, totalPages, loading, timbrados, getTimbrados, createTimbrado } = useUser();
 
   useEffect(() => {
     getUsers();
+    fetchTimbrados();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const fetchTimbrados = async () => {
+    try {
+      const data = await getTimbrados(); // ← datos reales
+      const now = new Date();
+  
+      const active = data.find(
+        (t) =>
+          new Date(t.issuedAt) <= now &&
+          new Date(t.expiresAt) >= now
+      );
+  
+      setActiveTimbrado(active || null);
+    } catch (err) {
+      console.error("Error obteniendo timbrados:", err);
+    }
+  };
+  
 
   const translateRole = (role) => {
     return ROLE_TRANSLATIONS[role] || role;
   };
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmitTimbrado = async (e) => {
+    e.preventDefault();
+    setLoadingTimbrado(true);
+  
+    try {
+      const payload = {
+        code: formData.code,
+        issuedAt: new Date(formData.issuedAt).toISOString(),
+        expiresAt: new Date(formData.expiresAt).toISOString(),
+      };
+  
+      await createTimbrado(payload);
+      setShowTimbradoModal(false);
+      fetchTimbrados();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoadingTimbrado(false);
+    }
+  };
+  
+
   return (
     <div className="p-4">
+      {/* Sección Usuarios */}
       <section className="flex gap-4 items-center justify-between mb-6 flex-wrap">
         <h3 className="text-2xl md:text-3xl font-medium text-green-800">
           Administración de usuarios
@@ -43,15 +101,11 @@ export default function ConfigAdmin() {
           className="bg-green-200 rounded-lg text-green-800 flex gap-2 border border-green-800 hover:bg-green-300 px-4 py-2 transition-colors"
         >
           <p>Añadir Usuario</p>
-          <img
-            className="w-4 object-contain"
-            src={anadir}
-            alt="Añadir usuario"
-          />
+          <img className="w-4 object-contain" src={anadir} alt="Añadir usuario" />
         </button>
       </section>
 
-      <div className="bg-white rounded-lg shadow-md overflow-x-auto">
+      <div className="bg-white rounded-lg shadow-md overflow-x-auto mb-6">
         {loading ? (
           <div className="p-8 text-center">Cargando usuarios...</div>
         ) : (
@@ -115,11 +169,7 @@ export default function ConfigAdmin() {
                         }
                       >
                         <span>Editar</span>
-                        <img
-                          className="w-3 object-contain"
-                          src={editar}
-                          alt="Editar"
-                        />
+                        <img className="w-3 object-contain" src={editar} alt="Editar" />
                       </button>
                     </td>
                   </tr>
@@ -130,7 +180,7 @@ export default function ConfigAdmin() {
         )}
       </div>
 
-      {/* Paginación */}
+      {/* Paginación Usuarios */}
       {totalPages > 1 && (
         <div className="flex justify-center items-center mt-4 gap-2 flex-wrap">
           <button
@@ -165,7 +215,86 @@ export default function ConfigAdmin() {
         </div>
       )}
 
-      {/* Modales */}
+      {/* Sección Timbrado */}
+      <section className="mt-8">
+        <h3 className="text-2xl md:text-3xl font-medium text-green-800 mb-4">
+          Timbrados
+        </h3>
+
+        {!activeTimbrado && (
+          <button
+            onClick={() => setShowTimbradoModal(true)}
+            className="bg-green-200 text-green-800 px-4 py-2 rounded-lg border border-green-800 hover:bg-green-300 flex gap-2"
+          >
+            Cargar Timbrado
+          </button>
+        )}
+
+        {activeTimbrado && (
+          <div className="mt-4 p-4 bg-green-100 border border-green-800 rounded-lg text-green-800">
+            <p><strong>Número:</strong> {activeTimbrado.code}</p>
+            <p><strong>Inicio vigencia:</strong> {new Date(activeTimbrado.issuedAt).toLocaleDateString()}</p>
+            <p><strong>Fin vigencia:</strong> {new Date(activeTimbrado.expiresAt).toLocaleDateString()}</p>
+            <p><strong>Establecimiento:</strong> {activeTimbrado.establishment}</p>
+            <p><strong>Sucursal:</strong> {activeTimbrado.branch}</p>
+            <p><strong>Máx. facturas:</strong> {activeTimbrado.maxInvoices}</p>
+          </div>
+        )}
+
+        {showTimbradoModal && (
+          <ProductFormModal isOpen={showTimbradoModal} onClose={() => setShowTimbradoModal(false)}>
+            <form onSubmit={handleSubmitTimbrado} className="flex flex-col gap-4">
+              <label className="flex flex-col text-green-800">
+                Número de timbrado
+                <input
+                  type="text"
+                  name="code"
+                  value={formData.code}
+                  onChange={handleChange}
+                  className="border border-green-800 rounded px-2 py-1 mt-1"
+                  required
+                />
+              </label>
+
+              <label className="flex flex-col text-green-800">
+                Fecha inicio vigencia
+                <input
+                  type="date"
+                  name="issuedAt"
+                  value={formData.issuedAt}
+                  onChange={handleChange}
+                  className="border border-green-800 rounded px-2 py-1 mt-1"
+                  required
+                />
+              </label>
+
+              <label className="flex flex-col text-green-800">
+                Fecha fin vigencia
+                <input
+                  type="date"
+                  name="expiresAt"
+                  value={formData.expiresAt}
+                  onChange={handleChange}
+                  className="border border-green-800 rounded px-2 py-1 mt-1"
+                  required
+                />
+              </label>
+
+              <button
+                type="submit"
+                disabled={loadingTimbrado}
+                className={`px-4 py-2 rounded-lg border border-green-800 transition-colors ${
+                  loadingTimbrado ? "bg-gray-200 text-gray-500 cursor-not-allowed" : "bg-green-200 text-green-800 hover:bg-green-300"
+                }`}
+              >
+                {loadingTimbrado ? "Cargando..." : "Guardar Timbrado"}
+              </button>
+            </form>
+          </ProductFormModal>
+        )}
+      </section>
+
+      {/* Modales Usuarios */}
       {editUser && (
         <ProductFormModal isOpen={editUser} onClose={() => setEditUser(false)}>
           <EditUser
