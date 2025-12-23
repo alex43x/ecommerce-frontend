@@ -25,7 +25,7 @@ export const CustomerProvider = ({ children }) => {
   const fetchData = async (url, method = "GET", body = null) => {
     setLoading(true);
     setError(null);
-
+    console.log("fetchData called with:", { url, method, body });
     try {
       const options = {
         method,
@@ -41,7 +41,7 @@ export const CustomerProvider = ({ children }) => {
         `${import.meta.env.VITE_API_URL}${url}`,
         options
       );
-
+      console.log(response);
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         const errorMessage =
@@ -216,100 +216,96 @@ export const CustomerProvider = ({ children }) => {
   };
 
   // ------------------------------------------------------------
-  // 🔷 Buscar cliente por RUC (1° local DB → 2° API externa)
+  //  Busca cliente por RUC (1° local DB → 2° API externa)
   // ------------------------------------------------------------
-const searchCustomerByRuc = async (ruc) => {
-  const defaultCustomer = {
-    doc: 0,
-    razonSocial: "CONSUMIDOR FINAL",
-    dv: 0,
-    ruc: "44444401-7",
-    estado: "ACTIVO",
-    esPersonaJuridica: false,
-    esEntidadPublica: false,
-  };
+  const searchCustomerByRuc = async (ruc) => {
+    const defaultCustomer = {
+      doc: 0,
+      razonSocial: "CONSUMIDOR FINAL",
+      dv: 0,
+      ruc: "44444401-7",
+      estado: "ACTIVO",
+      esPersonaJuridica: false,
+      esEntidadPublica: false,
+    };
 
-  // -------------------------------
-  // 1️⃣ BUSCAR EN TU API INTERNA POR RUC
-  // -------------------------------
-  try {
-    const local = await fetchData(`/api/customers/ruc/${ruc}`);
+    // -------------------------------
+    //  BUSCAR EN TU API INTERNA POR RUC
+    // -------------------------------
+    try {
+      const local = await fetchData(`/api/customers/ruc/${ruc}`);
 
-    if (local && local.ruc) {
-      const converted = {
-        doc: local.ruc,
-        razonSocial: local.name,
-        dv: local.dv ?? 0,
-        ruc: local.ruc,
-        estado: local.isActive ? "ACTIVO" : "INACTIVO",
-        esPersonaJuridica: false,
-        esEntidadPublica: false,
-      };
+      if (local && local.ruc) {
+        const converted = {
+          doc: local.ruc,
+          razonSocial: local.name,
+          dv: local.dv ?? 0,
+          ruc: local.ruc,
+          estado: local.isActive ? "ACTIVO" : "INACTIVO",
+          esPersonaJuridica: false,
+          esEntidadPublica: false,
+        };
 
-      setCustomer(converted);
-      return [converted];
-    }
-  } catch (err) {
-    // no existe → seguir
-  }
-
-  // -------------------------------
-  // 2️⃣ BUSCAR EN API EXTERNA
-  // -------------------------------
-  try {
-    const response = await fetch(
-      `https://turuc.com.py/api/contribuyente?ruc=${ruc}`
-    );
-
-    if (!response.ok) {
-      setCustomer(defaultCustomer);
-      return [defaultCustomer];
+        setCustomer(converted);
+        return [converted];
+      }
+    } catch (err) {
+      // no existe → seguir
     }
 
-    const result = await response.json();
+    // -------------------------------
+    //  BUSCAR EN API EXTERNA
+    // -------------------------------
+    try {
+      const response = await fetch(
+        `https://turuc.com.py/api/contribuyente?ruc=${ruc}`
+      );
 
-    if (result?.data?.ruc) {
-      const data = {
-        doc: result.data.doc,
-        razonSocial: result.data.razonSocial,
-        dv: result.data.dv,
-        ruc: result.data.ruc,
-        estado: result.data.estado,
-        esPersonaJuridica: result.data.esPersonaJuridica,
-        esEntidadPublica: result.data.esEntidadPublica,
-      };
-
-      setCustomer(data);
-
-      // -------------------------------
-      // 3️⃣ GUARDAR SOLO RUC Y NAME EN TU MONGO
-      // -------------------------------
-      try {
-        await fetchData("/api/customers", {
-          method: "POST",
-          body: {
-            ruc: data.ruc,
-            name: data.razonSocial,
-          },
-        });
-      } catch (saveError) {
-        // No pasa nada si ya existe (409)
-        console.warn("No se pudo guardar el cliente externo:", saveError);
+      if (!response.ok) {
+        setCustomer(defaultCustomer);
+        return [defaultCustomer];
       }
 
-      return [data];
+      const result = await response.json();
+
+      if (result?.data?.ruc) {
+        const data = {
+          doc: result.data.doc,
+          razonSocial: result.data.razonSocial,
+          dv: result.data.dv,
+          ruc: result.data.ruc,
+          estado: result.data.estado,
+          esPersonaJuridica: result.data.esPersonaJuridica,
+          esEntidadPublica: result.data.esEntidadPublica,
+        };
+        console.log("Cliente externo encontrado:", data);
+        setCustomer(data);
+
+        // -------------------------------
+        //  GUARDAR SOLO RUC Y NAME EN BD
+        // -------------------------------
+        try {
+          await fetchData("/api/customers", "POST", {
+            ruc: data.ruc,
+            name: data.razonSocial,
+          });
+        } catch (saveError) {
+          // No pasa nada si ya existe (409)
+          console.warn("No se pudo guardar el cliente externo:", saveError);
+        }
+
+        return [data];
+      }
+    } catch (error) {
+      console.error("Error al consultar API externa:", error);
     }
-  } catch (error) {
-    console.error("Error al consultar API externa:", error);
-  }
 
-  // -------------------------------
-  // 4️⃣ SI TODO FALLA → CONSUMIDOR FINAL
-  // -------------------------------
-  setCustomer(defaultCustomer);
-  return [defaultCustomer];
-};
-
+    // -------------------------------
+    // 4️⃣ SI TODO FALLA → CONSUMIDOR FINAL
+    // -------------------------------
+    setCustomer(defaultCustomer);
+    return [defaultCustomer];
+  };
 
   // ------------------------------------------------------------
   // 🔷 Limpiar búsqueda

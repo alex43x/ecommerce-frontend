@@ -15,6 +15,7 @@ import cashIcon from "../../images/cash.png";
 import cardIcon from "../../images/card.png";
 import qrIcon from "../../images/qr.png";
 import transferIcon from "../../images/transfer.png";
+import { useEffect } from "react";
 
 // Objeto de iconos
 const icons = {
@@ -28,6 +29,7 @@ const icons = {
   transfer: transferIcon,
 };
 
+
 const paymentOptions = [
   { value: "cash", label: "Efectivo", icon: icons.cash },
   { value: "card", label: "Tarjeta", icon: icons.card },
@@ -40,7 +42,7 @@ export default function OrderDetail({
   saleData = null,
   mode = "local",
 }) {
-  const { cart, setCart, totalAmount, paymentMethod, setPaymentMethod } =
+  const { cart, setCart, totalAmount, paymentMethod, setPaymentMethod,iva10,iva5,gravada5,gravada10,exenta } =
     useCart();
   const { user } = useAuth();
   const { createSale, getSales, updateSale, loading } = useSale();
@@ -61,7 +63,11 @@ export default function OrderDetail({
     received: 0,
     multi: false,
     paymentError: false,
+    invoiced:false
   });
+  useEffect(()=>{
+    console.log(cart)
+  },[cart])
 
   const [customerName, setCustomerName] = useState(
     saleData?.status === "ordered" ? saleData.customerName : ""
@@ -397,10 +403,11 @@ export default function OrderDetail({
       if (isPendingOrOrdered) {
         //Ventas reserva-ordenadas
         // Combina pagos anteriores y nuevos para enviar al backend
-        const auxGet=saleData?.status
+        const auxGet = saleData?.status;
         const updatedSale = {
           ...saleData,
           user: saleData.user._id,
+          invoiced: formState.invoiced,
           payment: [...(saleData.payment || []), ...newPayments],
           status: "completed",
           stage: "delivered",
@@ -415,7 +422,7 @@ export default function OrderDetail({
           forceRefresh: true,
           startDate: today,
           endDate: today,
-          status:auxGet
+          status: auxGet,
         });
 
         Swal.fire({
@@ -432,16 +439,10 @@ export default function OrderDetail({
       } else {
         // Venta nueva
         const newSale = {
-          products: cart.map((item) => ({
-            productId: item.productId,
-            variantId: item.variantId,
-            quantity: item.quantity,
-            iva: item.iva,
-            totalPrice: item.totalPrice,
-            name: item.name,
-          })),
+          products: cart,
           totalAmount,
           customerName,
+          invoiced:formState.invoiced,
           ruc: customerRUC || formState.ruc.trim() || "Sin RUC",
           payment: newPayments,
           iva: Math.round(total / 11),
@@ -527,14 +528,7 @@ export default function OrderDetail({
       }
       try {
         const provisionalSale = {
-          products: cart.map((item) => ({
-            productId: item.productId,
-            variantId: item.variantId,
-            quantity: item.quantity,
-            iva: item.iva,
-            totalPrice: item.totalPrice,
-            name: item.name,
-          })),
+          products: cart,
           totalAmount,
           ruc: customerRUC || formState.ruc.trim() || "Sin RUC",
           customerName,
@@ -602,7 +596,7 @@ export default function OrderDetail({
   ) => value.toLocaleString("es-PY", { style: "currency", currency: "PYG" });
 
   return (
-    <div className="w-[670px]">
+    <div className="w-[750px]">
       <div className="flex justify-between mb-3">
         <h3 className="text-2xl font-bold ml-1 text-green-900">
           {isPendingOrOrdered ? "Completar Pago" : "Pago de Orden"}
@@ -619,7 +613,7 @@ export default function OrderDetail({
         <section className="w-1/2 pr-2">
           <div
             className={`p-2 bg-[#dae4e4] rounded-lg overflow-y-auto ${
-              isPendingOrOrdered ? "h-60" : "h-76"
+              isPendingOrOrdered ? "h-60" : "h-60"
             }`}
           >
             <table className="w-full">
@@ -627,6 +621,8 @@ export default function OrderDetail({
                 <tr className="text-left border-b-2 border-neutral-100">
                   <th className="pb-1">Productos</th>
                   <th>Cant.</th>
+                  <th className="px-2">Tasa</th>
+                  <th className="px-2">IVA</th>
                   <th className="flex justify-end">Precio</th>
                 </tr>
               </thead>
@@ -639,6 +635,9 @@ export default function OrderDetail({
                         x{item.quantity}
                       </div>
                     </td>
+                    <td className="py-2 px-2">{item.ivaRate}%</td>
+                    <td className="py-2 pr-2">{formatCurrency(item.ivaAmount)}</td>
+
                     <td className="py-2 text-right">
                       {formatCurrency(item.totalPrice || item.price)}
                     </td>
@@ -650,12 +649,20 @@ export default function OrderDetail({
 
           <div className="font-medium mt-4 p-2 bg-[#dae4e4] rounded-lg">
             <div className="flex justify-between w-full my-1">
-              <p>Subtotal:</p>
-              <p className="text-green-900">{formatCurrency(total / 1.1)}</p>
+              <p>Gravada:</p>
+              <p className="text-green-900">{formatCurrency(gravada10+gravada5)|| formatCurrency(total / 1.1)}</p>
+            </div>
+            <div className="flex justify-between my-1">
+              <p>Exenta</p>
+              <p className="text-green-900">{formatCurrency(exenta)}</p>
+            </div>
+            <div className="flex justify-between my-1">
+              <p>IVA 5%</p>
+              <p className="text-green-900">{formatCurrency(iva5)}</p>
             </div>
             <div className="flex justify-between my-1">
               <p>IVA 10%</p>
-              <p className="text-green-900">{formatCurrency(total / 11)}</p>
+              <p className="text-green-900">{formatCurrency(iva10)}</p>
             </div>
             <div className="flex justify-between text-xl py-1 mt-1 border-t-2 border-dashed border-neutral-50">
               <p>Total</p>
@@ -741,8 +748,8 @@ export default function OrderDetail({
             </div>
 
             <>
-              <div className="mb-2 flex items-center gap-2 justify-between">
-                <div className="flex items-center gap-1">
+              <div className="mb-2 flex items-center gap-2 ">
+                <div className="flex items-center gap-1 w-1/2">
                   <input
                     type="checkbox"
                     id="multi"
@@ -759,6 +766,22 @@ export default function OrderDetail({
                     }}
                   />
                   <label htmlFor="multi">Pago Múltiple</label>
+                </div>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    id="invoiced"
+                    className="w-7 h-7"
+                    checked={formState.invoiced}
+                    onChange={() => {
+                      const newInvoiced = !formState.invoiced;
+                      setFormState((prev) => ({
+                        ...prev,
+                        invoiced: newInvoiced,
+                      }));
+                    }}
+                  />
+                  <label htmlFor="invoiced">Facturar</label>
                 </div>
                 {formState.multi && (
                   <p className="text-right text-green-800 font-semibold mt-1">

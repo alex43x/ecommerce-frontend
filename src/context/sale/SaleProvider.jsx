@@ -103,6 +103,7 @@ export const SaleProvider = ({ children }) => {
 
   const createSale = async (sale) => {
     setLoading(true);
+    console.log(sale)
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/sales`, {
         method: "POST",
@@ -113,6 +114,7 @@ export const SaleProvider = ({ children }) => {
       handleUnauthorized(res);
       const data = await res.json();
 
+      console.log(data);
       if (!res.ok) throw new Error(data.message || "Error al guardar venta");
       return data;
     } finally {
